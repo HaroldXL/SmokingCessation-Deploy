@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Modal,
   Form,
@@ -155,30 +155,28 @@ const roleOptions = [
   { value: "coach", label: "Coach" },
 ];
 
-const AccountStatusForm = ({ userData }) => (
+const AccountStatusForm = () => (
   <>
     <Title level={5} className={styles.sectionTitle}>
       Account Status
     </Title>
     <div className={styles.statusSection}>
-      <Form.Item
-        name="hasActive"
-        valuePropName="checked"
-        className={styles.switchItem}
-      >
+      <div className={styles.switchItem}>
         <div className={styles.switchWrapper}>
           <div className={styles.switchInfo}>
             <Text strong>Pro Account</Text>
             <Text type="secondary">Enable Pro features for this user.</Text>
           </div>
-          <Switch checked={userData?.hasActive} />
+          <Form.Item
+            name="hasActive"
+            valuePropName="checked"
+            style={{ margin: 0 }}
+          >
+            <Switch />
+          </Form.Item>
         </div>
-      </Form.Item>
-      <Form.Item
-        name="isVerified"
-        valuePropName="checked"
-        className={styles.switchItem}
-      >
+      </div>
+      <div className={styles.switchItem}>
         <div className={styles.switchWrapper}>
           <div className={styles.switchInfo}>
             <Text strong>Email Verified</Text>
@@ -186,9 +184,15 @@ const AccountStatusForm = ({ userData }) => (
               Indicates if the user's email is verified.
             </Text>
           </div>
-          <Switch checked={userData?.isVerified} />
+          <Form.Item
+            name="isVerified"
+            valuePropName="checked"
+            style={{ margin: 0 }}
+          >
+            <Switch />
+          </Form.Item>
         </div>
-      </Form.Item>
+      </div>
     </div>
   </>
 );
@@ -256,11 +260,13 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formKey, setFormKey] = useState(0); // Add this to force re-render
 
   const handleClose = useCallback(() => {
     if (submitting) return;
     form.resetFields();
     setUserData(null);
+    setFormKey(0);
     onClose();
   }, [form, onClose, submitting]);
 
@@ -285,28 +291,26 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
         typeof data.isVerified
       );
 
-      // Set form values with setTimeout to ensure proper timing
-      setTimeout(() => {
-        form.setFieldsValue({
-          fullName: data.fullName || "",
-          profileName: data.profileName || "",
-          email: data.email || "",
-          avatarUrl: data.avatarUrl || "",
-          birthDate: data.birthDate ? dayjs(data.birthDate) : null,
-          gender: data.gender || undefined,
-          role: data.role || "guest",
-          hasActive: data.hasActive === true,
-          isVerified: data.isVerified === true,
-        });
+      // Set form values immediately without setTimeout
+      form.setFieldsValue({
+        fullName: data.fullName || "",
+        profileName: data.profileName || "",
+        email: data.email || "",
+        avatarUrl: data.avatarUrl || "",
+        birthDate: data.birthDate ? dayjs(data.birthDate) : null,
+        gender: data.gender || undefined,
+        role: data.role || "guest",
+        hasActive: Boolean(data.hasActive),
+        isVerified: Boolean(data.isVerified),
+      });
 
-        console.log("Form values set:", {
-          hasActive: data.hasActive === true,
-          isVerified: data.isVerified === true,
-        });
+      console.log("Form values set:", {
+        hasActive: Boolean(data.hasActive),
+        isVerified: Boolean(data.isVerified),
+      });
 
-        // Force re-render to ensure switches update
-        setUserData({ ...data });
-      }, 100);
+      // Force form re-render
+      setFormKey((prev) => prev + 1);
     } catch (error) {
       message.error(error.message || "Failed to load user data.");
       handleClose();
@@ -334,9 +338,12 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
           : null,
         gender: values.gender || "male",
         role: values.role || "guest",
-        hasActive: values.hasActive || false,
-        isVerified: values.isVerified || false,
+        hasActive: Boolean(values.hasActive),
+        isVerified: Boolean(values.isVerified),
       };
+
+      console.log("Submitting data:", updateData);
+
       await userService.updateUser(userId, updateData);
       message.success("User updated successfully!");
       if (onUserUpdated) onUserUpdated();
@@ -368,14 +375,26 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
           </Title>
           <UserInfoHeader userData={userData} />
           <Form
+            key={formKey}
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
             className={styles.editForm}
+            initialValues={{
+              fullName: userData?.fullName || "",
+              profileName: userData?.profileName || "",
+              email: userData?.email || "",
+              avatarUrl: userData?.avatarUrl || "",
+              birthDate: userData?.birthDate ? dayjs(userData.birthDate) : null,
+              gender: userData?.gender || undefined,
+              role: userData?.role || "guest",
+              hasActive: Boolean(userData?.hasActive),
+              isVerified: Boolean(userData?.isVerified),
+            }}
           >
             <BasicInfoForm />
             <Divider />
-            <AccountStatusForm userData={userData} />
+            <AccountStatusForm />
             <Divider />
             <SystemInfo userData={userData} />
             <ModalFooter onCancel={handleClose} submitting={submitting} />
