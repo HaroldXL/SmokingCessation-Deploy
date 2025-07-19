@@ -1,4 +1,4 @@
-import "./ChangePass.css";
+import "./changePass.css";
 import MyAccountNav from "../../../../components/myAccount-nav/myAccount-nav";
 import { Affix, Button, Input, message, notification } from "antd";
 import Header from "../../../../components/header/header";
