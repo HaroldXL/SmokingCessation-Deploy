@@ -16,11 +16,15 @@ function Membership() {
     try {
       setUpgradeLoading(true);
 
+      const ipResponse = await fetch("https://api64.ipify.org?format=json");
+      const { ip: clientIp } = await ipResponse.json();
+
       const response = await api.post(
-        `/subscription/payment?email=${encodeURIComponent(user.email)}`
+        `/subscription/payment?clientIp=${clientIp}&email=${encodeURIComponent(
+          user.email
+        )}`
       );
 
-      // If successful, redirect to the payment URL
       if (response.data) {
         window.location.href = response.data;
       }
