@@ -1,0 +1,155 @@
+.wrapper__coach {
+    margin-bottom: 50px;
+}
+
+.wrapper__coach-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wrapper__coach-info-des {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.wrapper__coach-info-des-avt {
+    width: 90px;
+    height: 90px;
+    margin-right: 20px;
+}
+
+.wrapper__coach-note {
+    margin-top: 40px;
+}
+
+.wrapper__coach-info-des-note {
+    color: #7D7987;
+}
+
+.wrapper__coach-info-des-name {
+    color: #0A52B5;
+    margin-bottom: 10px;
+}
+
+.wrapper__coach-info-des-note-mail {
+    margin-right: 7px;
+}
+
+.wrapper__coach-info-rate-number {
+    color: #7D7987;
+    margin-top: 10px;
+}
+
+.wrapper__coach-title {
+    margin-top: 30px;
+}
+
+.wrapper__coach-title-des {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #7D7987;
+    margin-top: 5px;
+}
+
+.wrapper__coach-schedule-detail {
+    margin-top: 20px;
+}
+
+.wrapper__coach-schedule-detail-date {
+    font-size: 20px;
+    font-weight: 600;
+    color: #458FF6;
+}
+
+.wrapper__coach-schedule-detail-card {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 25px;
+}
+
+.wrapper__coach-schedule-detail-card-time {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    border: 2px solid #f0eeee;
+    border-radius: 20px;
+    width: 23%;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.wrapper__coach-schedule-detail-card-time.selected {
+    background-color: #c2dbff;
+}
+
+.wrapper__coach-schedule-detail-card-time-slot {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    margin-bottom: 5px;
+}
+
+.wrapper__coach-schedule-booking {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.wrapper__coach-schedule-detail-card-time-detail {
+    color: #7D7987;
+    font-size: 16px;
+}
+
+.wrapper__coach-schedule-booking-btn {
+    width: 250px;
+    height: 40px;
+    font-size: 16px;
+    font-weight: 600;
+}
+ 
+.wrapper__coach-feedback-card {
+    border: 2px solid #f0eeee;
+    border-radius: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.wrapper__coach-feedback-card-item {
+    display: flex;
+    flex-direction: row;
+}
+
+.wrapper__coach-feedback-card-item-avt {
+    min-width: 65px;
+    min-height: 65px;
+    max-width: 65px;
+    max-height: 65px;
+    margin-right: 20px;
+}
+
+.wrapper__coach-feedback-card-item-content-name {
+    color: #0A52B5;
+    font-size: 20px;
+    margin-bottom: 3px;
+}
+
+.wrapper__coach-feedback-item-content-note {
+    color: #7D7987;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+.wrapper__coach-feedback-btn {
+
+    height: 40px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

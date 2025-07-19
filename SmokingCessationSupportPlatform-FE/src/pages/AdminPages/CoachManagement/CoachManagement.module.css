@@ -1,0 +1,210 @@
+.coach-management-page {
+  padding: 40px 48px 0 48px;
+}
+
+.coach-management-page h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.summary-cards-row {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 18px;
+}
+
+.summary-card {
+  background: #eaf3fe;
+  border-radius: 16px;
+  padding: 24px 32px;
+  min-width: 180px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.06);
+  border: 1px solid #e3e8f7;
+}
+.summary-label {
+  font-size: 1.1rem;
+  color: #444;
+  margin-bottom: 8px;
+}
+.summary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #222;
+}
+.rating-value {
+  color: #fbbf24;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.list-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.search-filter-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.search-input, .filter-select {
+  padding: 8px 12px;
+  border: 1px solid #e3e8f7;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fff;
+}
+
+.add-user-btn {
+  background: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.add-user-btn:hover {
+  background: #2563eb;
+}
+
+.coach-table-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.06);
+  border: 1px solid #e3e8f7;
+  padding: 0 0 12px 0;
+}
+
+.coach-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.coach-table th, .coach-table td {
+  padding: 12px 10px;
+  text-align: left;
+}
+
+.coach-table th {
+  background: #f4f7fe;
+  font-weight: 700;
+  color: #222;
+}
+
+.coach-table tr:not(:last-child) {
+  border-bottom: 1px solid #e3e8f7;
+}
+
+.expertise-badge {
+  background: #e0e7ff;
+  color: #6366f1;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  display: inline-block;
+}
+
+.star {
+  color: #e5e7eb;
+  font-size: 18px;
+  margin-right: 2px;
+}
+.star.filled {
+  color: #fbbf24;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-block;
+}
+.status-active {
+  background: #d1fae5;
+  color: #059669;
+}
+.status-inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.action-btn {
+  margin-right: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.action-btn.edit {
+  background: #e0e7ff;
+  color: #6366f1;
+}
+.action-btn.details {
+  background: #f3f4f6;
+  color: #222;
+}
+
+/* Custom scrollbar styles */
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+  position: relative;
+  padding-bottom: 10px;
+  /* Hide the default scrollbar */
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For IE and Edge */
+}
+
+.table-container::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+}
+
+.table-scrollbar {
+  height: 8px;
+  width: 100%;
+  background: #f0f0f0;
+  border-radius: 4px;
+  margin-top: 10px;
+  position: relative;
+}
+
+.table-scrollbar-thumb {
+  height: 100%;
+  background: #888;
+  border-radius: 4px;
+  cursor: pointer;
+  position: absolute;
+  left: 0;
+  transition: background-color 0.2s;
+}
+
+.table-scrollbar-thumb:hover {
+  background: #555;
+}
+
+@media (max-width: 900px) {
+  .summary-cards-row, .search-filter-row {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .coach-management-page {
+    padding: 12px 4px 0 0;
+  }
+}

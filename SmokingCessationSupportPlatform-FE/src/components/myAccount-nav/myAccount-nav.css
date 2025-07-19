@@ -1,0 +1,22 @@
+.wrapper__profile-nav{
+    display: flex;
+    flex-direction: column;
+    min-width: 230px;
+}
+
+.wrapper__profile-nav a {
+    text-decoration: none;
+    color: #adacac;
+    font-size: 18px;
+    margin-bottom: 15px;
+    transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.wrapper__profile-nav a:hover {
+    opacity: 0.6;
+}
+
+.wrapper__profile-nav a.active {
+    font-weight: bold;
+    color: #000;
+}   
