@@ -9,4 +9,12 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: true,
   },
+
+  server: {
+    historyApiFallback: true,
+  },
+
+  preview: {
+    historyApiFallback: true,
+  },
 })
