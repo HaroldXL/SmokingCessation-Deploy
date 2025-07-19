@@ -16,14 +16,8 @@ function Membership() {
     try {
       setUpgradeLoading(true);
 
-      // Get user's IP address (using localhost for development)
-      const clientIp = "localhost";
-
-      // Call payment API with user email, client IP, and return URL
       const response = await api.post(
-        `/subscription/payment?clientIp=${clientIp}&email=${encodeURIComponent(
-          user.email
-        )}`
+        `/subscription/payment?email=${encodeURIComponent(user.email)}`
       );
 
       // If successful, redirect to the payment URL
