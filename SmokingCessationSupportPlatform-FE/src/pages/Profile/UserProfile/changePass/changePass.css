@@ -1,0 +1,12 @@
+.wrapper__profile-details-title {
+    margin-bottom: 20px;
+}
+
+.wrapper__profile-details h3 {
+    margin-bottom: 30px;
+    font-weight: lighter;
+}
+
+.send-reset-code {
+    margin-top: 30px;
+}

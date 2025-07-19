@@ -1,0 +1,85 @@
+.wrapper__profile-membership {
+    margin-bottom: 50px;
+}
+
+.wrapper__profile-membership-text {
+    font-size: 18px;
+    margin-top: 20px;
+    margin-bottom: 50px;
+}
+
+.wrapper__profile-membership-text span{
+    color: #EAC04C;
+    font-weight: 600;
+}
+
+.wrapper__profile-membership-plan {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 50px;
+}
+
+.wrapper__profile-membership-card {
+    padding: 0 10px;
+    border: 2px solid #f0eeee;
+    border-radius: 20px;
+}
+
+.wrapper__profile-membership-card-free {
+    min-width: 40%;
+}
+
+.wrapper__profile-membership-card-pro {
+    min-width: 57%;
+}
+
+.wrapper__profile-membership-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.pro{
+    color: #EAC04C;
+    font-weight: 600;
+    font-size: 24px;
+}
+
+.wrapper__profile-membership-card-features {
+    list-style: none;
+    color: #7D7987;
+    font-size: 18px;
+}
+
+.wrapper__profile-membership-card-features-pro {
+    font-size: 20px;
+}
+
+.wrapper__profile-membership-card-features li {
+    margin-bottom: 10px;
+}
+
+.CheckCircleFilled {
+    color: #95C2FF;
+    margin-right: 15px;
+}
+
+.wrapper__profile-membership-card-upgrade {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+    margin-top: 30px;
+    width: 100%;
+}
+
+.wrapper__profile-membership-card-upgrade-btn {
+    width: 100%;
+    border-radius: 200px;
+    height: 40px;
+    font-weight: 600;
+    font-size: 16px;
+}

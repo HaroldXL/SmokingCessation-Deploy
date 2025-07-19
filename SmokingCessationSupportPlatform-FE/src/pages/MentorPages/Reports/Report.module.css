@@ -1,0 +1,33 @@
+.title {
+  margin-bottom: 24px;
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.statistic {
+  color: #1890ff;
+}
+
+.successRate {
+  color: #52c41a;
+}
+
+.clientProgressTable {
+  margin-bottom: 24px;
+}
+
+.monthlyPerformance {
+  border-radius: 12px;
+}
+
+.monthlyCard {
+  text-align: center;
+  background-color: #fafafa;
+  border-radius: 8px;
+}
+
+.successMetrics {
+  margin-bottom: 24px;
+}

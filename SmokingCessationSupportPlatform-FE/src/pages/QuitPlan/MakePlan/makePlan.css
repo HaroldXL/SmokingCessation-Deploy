@@ -1,0 +1,129 @@
+.wrapper__content-des {
+  border: 2px solid #f0eeee;
+  border-radius: 20px;
+  padding: 30px;
+}
+
+.wrapper__content p {
+    color: #7D7987;
+    font-size: 16px;
+    line-height: 1.5;
+    padding-top: 10px;
+}
+
+.wrapper__content-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    border: 2px solid #f0eeee;
+    border-radius: 20px;
+    padding: 30px 70px;
+    margin-bottom: 50px;
+}
+
+.wrapper__content-step-title {
+    color: #0A52B5;
+    padding: 10px 0;
+    font-size: 30px;
+}
+
+.ant-radio-wrapper {
+    font-size: 18px;
+    color: #6D6E76;
+    padding: 20px 100px;
+}
+
+.ant-picker {
+    width: 300px;
+    height: 50px;
+}
+
+.wrapper__content-step-datetimepicker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wrapper__content-step-cost {
+    padding-top: 10px;
+}
+
+.wrapper__content-step-cost-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
+
+.wrapper__content-step-cost-item h3 {
+    font-size: 18px;
+}
+
+.wrapper__content-step-cost-input {
+    display: flex;
+    align-items: center;
+    width: 90px;
+    height: 40px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.wrapper__content-step-cost-input-item {
+    padding-top: 20px;
+}
+
+.wrapper__content-step-reason {
+    width: 90%;
+    margin-top: 20px;
+    margin-left: 100px;
+    text-align: left;
+}
+
+.wrapper__content-step-reason-checkbox {
+    padding-top: 10px;
+    font-size: 16px;
+}
+
+.wrapper__content-step-triggers {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    text-align: left;
+    margin-left: 80px;
+}
+
+.wrapper__content-step-triggers-card-content {
+    margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.wrapper__content-step-triggers-card {
+    display: flex;  
+    border: none;
+    width: 48%;
+    margin-top: 20px;
+}
+
+.delete-account {
+    margin-bottom: 50px;
+}
+
+.wrapper__create-btn-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wrapper__create-btn {
+    min-width: 20%;
+    height: 40px;
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 50px;
+}
