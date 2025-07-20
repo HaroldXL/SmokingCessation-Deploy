@@ -126,7 +126,6 @@ function UserCoachDetail() {
     return timeRanges[slotNumber] || "";
   };
 
-  // Function to format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const options = {
