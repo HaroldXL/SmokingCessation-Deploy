@@ -9,6 +9,8 @@ import {
   Upload,
   Empty,
   message,
+  Skeleton,
+  Spin,
 } from "antd";
 import Footer from "../../../../components/footer/footer";
 import Header from "../../../../components/header/header";
@@ -25,7 +27,7 @@ function UserPosts() {
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [userPosts, setUserPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [fileList, setFileList] = useState([]);
   const [form] = Form.useForm();
 
@@ -45,6 +47,7 @@ function UserPosts() {
 
   const fetchUserPost = async () => {
     try {
+      setLoading(true);
       const response = await api.get("/post/my");
       const approvedPosts = response.data.filter(
         (post) => post.isApproved === true
@@ -53,6 +56,8 @@ function UserPosts() {
     } catch (error) {
       console.error("Error fetching user posts:", error);
       message.error("Failed to fetch user posts. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -253,11 +258,14 @@ function UserPosts() {
               </Form>
             </Modal>
 
-            {userPosts.length === 0 ? (
-              <Empty
-                className="empty-posts"
-                description="You haven't posted anything yet"
-              />
+            {loading ? (
+              <div className="wrapper__posts-loading">
+                <Spin size="large" />
+              </div>
+            ) : userPosts.length === 0 ? (
+              <div className="wrapper__posts-empty">
+                <Empty description="You haven't posted anything yet" />
+              </div>
             ) : (
               <div className="wrapper__community-posts-container">
                 {userPosts.map((post) => (

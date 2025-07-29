@@ -56,11 +56,27 @@
 }
 
 .wrapper__community-posts-card-content p {
-    white-space: pre-wrap; /* Preserve line breaks */
+    white-space: pre-wrap; 
     word-wrap: break-word;
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3; /* Limit to 3 lines for preview */
+    -webkit-line-clamp: 3;
     line-clamp: 3;
+}
+
+.wrapper__posts-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    min-width: 630%;
+}
+
+.wrapper__posts-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    min-width: 300%;
 }
