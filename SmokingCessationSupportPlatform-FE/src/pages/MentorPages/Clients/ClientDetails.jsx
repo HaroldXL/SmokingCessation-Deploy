@@ -931,7 +931,7 @@ export const MentorClientDetails = () => {
                         </Text>
                         {consultation.feedback && (
                           <Text italic style={{ color: "#52c41a" }}>
-                            💬 "{consultation.feedback}"
+                            "{consultation.feedback}"
                           </Text>
                         )}
                       </Space>
@@ -979,11 +979,10 @@ export const MentorClientDetails = () => {
                       value={smokingProgress.moneySaved}
                       prefix={<DollarOutlined style={{ color: "#52c41a" }} />}
                       valueStyle={{ color: "#52c41a" }}
-                      suffix="VND"
                     />
                     <Text type="secondary" style={{ fontSize: 12 }}>
                       Pack cost:{" "}
-                      {smokingProgress.cigarettePackCost?.toLocaleString()} VND
+                      {smokingProgress.cigarettePackCost?.toLocaleString()}
                     </Text>
                   </Card>
                 </Col>
@@ -1081,31 +1080,6 @@ export const MentorClientDetails = () => {
                             }}
                           >
                             {smokingProgress.status}
-                          </Tag>
-                        </div>
-
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Text strong>Plan Result:</Text>
-                          <Tag
-                            color={
-                              smokingProgress.planResult === "complete"
-                                ? "green"
-                                : smokingProgress.planResult === "incomplete"
-                                ? "orange"
-                                : "default"
-                            }
-                            style={{
-                              textTransform: "capitalize",
-                              fontWeight: 500,
-                            }}
-                          >
-                            {smokingProgress.planResult}
                           </Tag>
                         </div>
 
@@ -1299,7 +1273,7 @@ export const MentorClientDetails = () => {
                                           italic
                                           style={{ color: "#595959" }}
                                         >
-                                          💭 "{event.notes}"
+                                          "{event.notes}"
                                         </Text>
                                       )}
                                     </Space>
