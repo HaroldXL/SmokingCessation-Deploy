@@ -14,6 +14,9 @@ import {
   Dropdown,
   message,
   Tooltip,
+  Modal,
+  Rate,
+  Empty,
 } from "antd";
 import dayjs from "dayjs";
 import {
@@ -23,6 +26,7 @@ import {
   ClockCircleOutlined,
   UserOutlined,
   MoreOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
 import AdminLayout from "../../../components/layout/AdminLayout";
 import api from "../../../config/axios.js";
@@ -38,7 +42,6 @@ const timeSlots = [
   { id: 4, label: "Slot 4", time: "15:30 - 18:00", period: "Afternoon" },
 ];
 
-// Helper function to generate week days based on current date
 const generateWeekDays = (currentDate) => {
   const startOfWeek = currentDate.startOf("week"); // Start from Sunday
   const days = [];
@@ -98,6 +101,9 @@ function ScheduleManagement() {
   const [loading, setLoading] = useState(false);
   const [allMentors, setAllMentors] = useState([]);
   const [realSlots, setRealSlots] = useState([]);
+  const [feedbackModal, setFeedbackModal] = useState(false);
+  const [mentorFeedbacks, setMentorFeedbacks] = useState([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
 
   // Generate week days based on current date
   const weekDays = useMemo(() => generateWeekDays(currentDate), [currentDate]);
@@ -355,6 +361,35 @@ function ScheduleManagement() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handler for viewing mentor feedback
+  const handleViewFeedback = async () => {
+    if (!selectedMentor) {
+      message.error("Please select a mentor first");
+      return;
+    }
+
+    try {
+      setLoadingFeedback(true);
+      setFeedbackModal(true);
+      const response = await api.get(
+        `/admin/mentors/${selectedMentor}/feedback`
+      );
+      setMentorFeedbacks(response.data || []);
+    } catch (error) {
+      console.error("Error fetching mentor feedback:", error);
+      message.error("Failed to load mentor feedback");
+      setMentorFeedbacks([]);
+    } finally {
+      setLoadingFeedback(false);
+    }
+  };
+
+  // Close feedback modal
+  const handleCloseFeedbackModal = () => {
+    setFeedbackModal(false);
+    setMentorFeedbacks([]);
   };
 
   // Handle mentor filter change
@@ -708,35 +743,47 @@ function ScheduleManagement() {
                 </Space>
               </Col>
               <Col>
-                <Row gutter={32}>
-                  <Col>
-                    <Statistic
-                      title="Total Slots"
-                      value={currentMentor.totalSlots}
-                    />
-                  </Col>
-                  <Col>
-                    <Statistic
-                      title="Available"
-                      value={currentMentor.availableSlots}
-                      valueStyle={{ color: "#52c41a" }}
-                    />
-                  </Col>
-                  <Col>
-                    <Statistic
-                      title="Booked"
-                      value={currentMentor.bookedSlots}
-                      valueStyle={{ color: "#1890ff" }}
-                    />
-                  </Col>
-                  <Col>
-                    <Statistic
-                      title="Completed"
-                      value={currentMentor.completedSlots}
-                      valueStyle={{ color: "#8c8c8c" }}
-                    />
-                  </Col>
-                </Row>
+                <Space direction="vertical" size="middle">
+                  <Row gutter={32}>
+                    <Col>
+                      <Statistic
+                        title="Total Slots"
+                        value={currentMentor.totalSlots}
+                      />
+                    </Col>
+                    <Col>
+                      <Statistic
+                        title="Available"
+                        value={currentMentor.availableSlots}
+                        valueStyle={{ color: "#52c41a" }}
+                      />
+                    </Col>
+                    <Col>
+                      <Statistic
+                        title="Booked"
+                        value={currentMentor.bookedSlots}
+                        valueStyle={{ color: "#1890ff" }}
+                      />
+                    </Col>
+                    <Col>
+                      <Statistic
+                        title="Completed"
+                        value={currentMentor.completedSlots}
+                        valueStyle={{ color: "#8c8c8c" }}
+                      />
+                    </Col>
+                  </Row>
+                  {selectedMentor && (
+                    <Button
+                      type="primary"
+                      icon={<CommentOutlined />}
+                      onClick={handleViewFeedback}
+                      size="middle"
+                    >
+                      View All Feedback
+                    </Button>
+                  )}
+                </Space>
               </Col>
             </Row>
           </Card>
@@ -763,6 +810,81 @@ function ScheduleManagement() {
             </div>
           </Card>
         </div>
+
+        {/* Feedback Modal */}
+        <Modal
+          title={`Feedback for ${
+            currentMentor.fullName || currentMentor.profileName
+          }`}
+          open={feedbackModal}
+          onCancel={handleCloseFeedbackModal}
+          footer={[
+            <Button key="close" onClick={handleCloseFeedbackModal}>
+              Close
+            </Button>,
+          ]}
+          width={800}
+          style={{ top: 20 }}
+        >
+          {loadingFeedback ? (
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              <Typography.Text>Loading feedback...</Typography.Text>
+            </div>
+          ) : mentorFeedbacks.length === 0 ? (
+            <Empty description="No feedback available for this mentor" />
+          ) : (
+            <div style={{ maxHeight: "600px", overflowY: "auto" }}>
+              {mentorFeedbacks.map((feedback) => (
+                <Card
+                  key={feedback.consultationId}
+                  size="small"
+                  style={{ marginBottom: "16px" }}
+                  title={
+                    <Space>
+                      <Avatar
+                        src={feedback.user.avatarUrl}
+                        icon={<UserOutlined />}
+                        size="small"
+                      />
+                      <Typography.Text strong>
+                        {feedback.user.fullName}
+                      </Typography.Text>
+                      <Typography.Text type="secondary">
+                        ({feedback.user.email})
+                      </Typography.Text>
+                    </Space>
+                  }
+                  extra={
+                    <Space>
+                      <Rate disabled value={feedback.rating} />
+                      <Typography.Text type="secondary">
+                        {dayjs(feedback.slot.slotDate).format("MMM DD, YYYY")} -
+                        Slot {feedback.slot.slotNumber}
+                      </Typography.Text>
+                    </Space>
+                  }
+                >
+                  <Typography.Paragraph style={{ margin: 0 }}>
+                    {feedback.feedback}
+                  </Typography.Paragraph>
+                  <div style={{ marginTop: "8px" }}>
+                    <Tag color="blue">
+                      Consultation #{feedback.consultationId}
+                    </Tag>
+                    <Tag
+                      color={
+                        feedback.status === "completed" ? "green" : "orange"
+                      }
+                    >
+                      {feedback.status.charAt(0).toUpperCase() +
+                        feedback.status.slice(1)}
+                    </Tag>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Modal>
       </div>
     </AdminLayout>
   );

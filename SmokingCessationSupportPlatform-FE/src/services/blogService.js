@@ -15,13 +15,13 @@ export const blogService = {
 
   // Tạo bài viết mới
   createPost: async (postData) => {
-    const response = await api.post('/posts', postData);
+    const response = await api.post('/admin/post', postData);
     return response.data;
   },
 
   // Cập nhật bài viết
   updatePost: async (id, postData) => {
-    const response = await api.put(`/posts/${id}`, postData);
+    const response = await api.put(`/admin/post/${id}`, postData);
     return response.data;
   },
 

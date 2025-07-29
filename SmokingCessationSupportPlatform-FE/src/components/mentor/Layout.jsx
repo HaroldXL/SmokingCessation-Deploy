@@ -41,12 +41,6 @@ export const MentorLayout = () => {
       label: "Clients",
       path: "/mentor/clients", // Use full paths
     },
-    {
-      key: "reports",
-      icon: <BarChartOutlined />,
-      label: "Reports",
-      path: "/mentor/reports", // Use full paths
-    },
   ];
 
   const handleLogout = () => {

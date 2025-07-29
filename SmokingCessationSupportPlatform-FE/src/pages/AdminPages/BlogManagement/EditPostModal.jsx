@@ -1,165 +1,206 @@
 import React, { useState, useEffect } from "react";
-import styles from "./EditPostModal.module.css";
+import { Modal, Form, Input, Select, Upload, Button, message } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+import { blogService } from "../../../services/blogService";
+import uploadFile from "../../../store/utils/file";
+
+const { TextArea } = Input;
 
 const EditPostModal = ({ post, isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    status: false,
-    author: "",
-  });
-
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [fileList, setFileList] = useState([]);
 
-  // Update form data when post changes
+  // Update form when post changes
   useEffect(() => {
-    if (post) {
-      setFormData({
+    if (post && isOpen) {
+      form.setFieldsValue({
         title: post.title || "",
         content: post.content || "",
+        postType: post.postType || "other",
         status: post.status || false,
-        author: post.author || "",
       });
+
+      // Set existing image in fileList if available
+      if (post.imageUrl) {
+        setFileList([
+          {
+            uid: "-1",
+            name: "current-image",
+            status: "done",
+            url: post.imageUrl,
+          },
+        ]);
+      } else {
+        setFileList([]);
+      }
     }
-  }, [post]);
+  }, [post, isOpen, form]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "select-one" && name === "status" ? value === "true" : value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.title.trim()) {
-      alert("Title is required");
-      return;
-    }
-
-    setLoading(true);
+  const handleSubmit = async (values) => {
     try {
-      // Call the onSave callback with updated data
-      await onSave({
-        ...post,
-        ...formData,
-        updated: new Date().toISOString(),
-      });
-      onClose();
+      setLoading(true);
+
+      // Handle image upload if there's a new file
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        try {
+          const uploadedImageUrl = await uploadFile(fileList[0].originFileObj);
+          values.imageUrl = uploadedImageUrl;
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          message.error("Failed to upload image. Please try again.");
+          return;
+        }
+      } else if (fileList.length > 0 && fileList[0].url) {
+        // Keep existing image
+        values.imageUrl = fileList[0].url;
+      }
+
+      // Call API to update post
+      await blogService.updatePost(post.id, values);
+      message.success("Post updated successfully!");
+
+      // Call onSave callback to refresh data
+      if (onSave) onSave();
+      handleClose();
     } catch (error) {
-      alert("Failed to save post: " + error.message);
+      console.error("Error updating post:", error);
+      message.error("Failed to update post. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    // Reset form data
-    if (post) {
-      setFormData({
-        title: post.title || "",
-        content: post.content || "",
-        status: post.status || false,
-        author: post.author || "",
-      });
-    }
+  const handleClose = () => {
+    form.resetFields();
+    setFileList([]);
     onClose();
   };
 
-  if (!isOpen) return null;
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith("image/");
+    const isLt5M = file.size / 1024 / 1024 < 5;
+
+    if (!isImage) {
+      message.error("You can only upload image files!");
+      return Upload.LIST_IGNORE;
+    }
+    if (!isLt5M) {
+      message.error("Image must smaller than 5MB!");
+      return Upload.LIST_IGNORE;
+    }
+
+    return false; // Prevent auto upload
+  };
+
+  const handleUploadChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+  };
 
   return (
-    <div className={styles["modal-overlay"]}>
-      <div className={styles["modal-content"]}>
-        <div className={styles["modal-header"]}>
-          <h2>Edit Post</h2>
-          <button
-            className={styles["close-btn"]}
-            onClick={handleCancel}
-            disabled={loading}
+    <Modal
+      title="Edit Post"
+      open={isOpen}
+      onCancel={handleClose}
+      width={600}
+      footer={[
+        <Button key="cancel" onClick={handleClose} disabled={loading}>
+          Cancel
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          loading={loading}
+          onClick={() => form.submit()}
+        >
+          Update Post
+        </Button>,
+      ]}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={{
+          title: "",
+          content: "",
+          postType: "other",
+          status: false,
+        }}
+      >
+        <Form.Item
+          label="Title"
+          name="title"
+          rules={[
+            {
+              required: true,
+              message: "Please enter the title of post.",
+            },
+          ]}
+        >
+          <Input placeholder="Enter the post's title" />
+        </Form.Item>
+
+        <Form.Item
+          label="Category"
+          name="postType"
+          rules={[
+            {
+              required: true,
+              message: "Please select the type of post.",
+            },
+          ]}
+        >
+          <Select
+            allowClear
+            placeholder="Select the post's category"
+            options={[
+              { value: "tips", label: "TIPS" },
+              { value: "stories", label: "STORIES" },
+              { value: "other", label: "OTHER" },
+            ]}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Content"
+          name="content"
+          rules={[
+            {
+              required: true,
+              message: "Please enter the content of post.",
+            },
+          ]}
+        >
+          <TextArea
+            placeholder="Enter the post's content"
+            autoSize={{ minRows: 6, maxRows: 10 }}
+          />
+        </Form.Item>
+
+        <Form.Item label="Image" name="imageUrl">
+          <Upload
+            listType="picture"
+            maxCount={1}
+            fileList={fileList}
+            onChange={handleUploadChange}
+            beforeUpload={beforeUpload}
           >
-            ×
-          </button>
-        </div>
+            <Button icon={<UploadOutlined />}>Upload Image (Max 1)</Button>
+          </Upload>
+        </Form.Item>
 
-        <form onSubmit={handleSubmit} className={styles["edit-form"]}>
-          <div className={styles["form-group"]}>
-            <label htmlFor="title">Title *</label>
-            <input
-              id="title"
-              name="title"
-              type="text"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Enter post title"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles["form-group"]}>
-            <label htmlFor="author">Author</label>
-            <input
-              id="author"
-              name="author"
-              type="text"
-              value={formData.author}
-              onChange={handleInputChange}
-              placeholder="Enter author name"
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles["form-group"]}>
-            <label htmlFor="content">Content</label>
-            <textarea
-              id="content"
-              name="content"
-              value={formData.content}
-              onChange={handleInputChange}
-              placeholder="Enter post content"
-              rows="6"
-              disabled={loading}
-            />
-          </div>
-
-          <div className={styles["form-group"]}>
-            <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status.toString()}
-              onChange={handleInputChange}
-              disabled={loading}
-            >
-              <option value="false">Not Published</option>
-              <option value="true">Published</option>
-            </select>
-          </div>
-
-          <div className={styles["modal-actions"]}>
-            <button
-              type="submit"
-              className={styles["save-btn"]}
-              disabled={loading}
-            >
-              {loading ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              type="button"
-              className={styles["cancel-btn"]}
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <Form.Item label="Status" name="status" valuePropName="checked">
+          <Select
+            placeholder="Select status"
+            options={[
+              { value: false, label: "Not Published" },
+              { value: true, label: "Published" },
+            ]}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 };
 
