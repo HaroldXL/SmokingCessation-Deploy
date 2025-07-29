@@ -5,7 +5,6 @@ import dayjs from "dayjs";
 import api from "../../../config/axios";
 import styles from "./ModalForDetailsButton.module.css";
 
-// Utility functions
 const calculateAge = (birthDate) => {
   if (!birthDate) return "N/A";
   try {

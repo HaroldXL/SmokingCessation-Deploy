@@ -20,7 +20,6 @@ function OtherBadges() {
         const response = await api.get(`/profile/by-name/${profileName}`);
         setUser(response.data);
 
-        // Fetch user badges
         const badgesResponse = await api.get(
           `/achievements/badges/${response.data.userId}`
         );

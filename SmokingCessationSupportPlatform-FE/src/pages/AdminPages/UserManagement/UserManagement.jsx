@@ -1,20 +1,7 @@
 import styles from "./UserManagement.module.css";
 import AdminLayout from "../../../components/layout/AdminLayout.jsx";
 import ReusableTable from "../../../components/admin/ReusableTable/ReusableTable.jsx";
-import {
-  Modal,
-  Tabs,
-  Form,
-  Select,
-  Tag,
-  List,
-  Descriptions,
-  Button,
-  Input,
-  message,
-  Card,
-  Space,
-} from "antd";
+import { Modal, Select, Tag, Button, Input, message, Space } from "antd";
 import {
   EyeOutlined,
   EditOutlined,
@@ -45,7 +32,7 @@ const roleOptions = [
   { value: "", label: "All roles" },
   { value: "user", label: "Customer" },
   { value: "admin", label: "Admin" },
-  { value: "guest", label: "Guest" },
+  { value: "mentor", label: "Coach" },
 ];
 
 const UserManagement = () => {

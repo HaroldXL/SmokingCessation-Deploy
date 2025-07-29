@@ -14,14 +14,12 @@ import {
   Typography,
   Tag,
   message,
-  Avatar,
   Button,
   Tooltip,
   Spin,
   Upload,
 } from "antd";
 import {
-  PlusOutlined,
   EditOutlined,
   TrophyOutlined,
   UploadOutlined,
@@ -41,11 +39,9 @@ function BadgeManagement() {
   const [fileList, setFileList] = useState([]);
   const [form] = Form.useForm();
 
-  // Filter states
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  // Fetch badges from API
   const fetchBadges = async () => {
     try {
       setLoading(true);
@@ -60,12 +56,10 @@ function BadgeManagement() {
     }
   };
 
-  // Load badges on component mount
   useEffect(() => {
     fetchBadges();
   }, []);
 
-  // Upload handlers
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith("image/");
     const isLt5M = file.size / 1024 / 1024 < 5;
@@ -86,7 +80,6 @@ function BadgeManagement() {
     setFileList(newFileList);
   };
 
-  // Apply filters whenever search or filterStatus changes
   useEffect(() => {
     let filtered = badges;
 
@@ -110,7 +103,6 @@ function BadgeManagement() {
     setFilteredBadges(filtered);
   }, [search, filterStatus, badges]);
 
-  // Selection handlers
   const handleSelectAll = (checked) => {
     if (checked) {
       setSelectedRowKeys(filteredBadges.map((badge) => badge.badgeId));
@@ -138,7 +130,6 @@ function BadgeManagement() {
         isActive: badge.isActive,
       });
 
-      // Set existing image in fileList if available
       if (badge.badgeImageUrl) {
         setFileList([
           {
@@ -151,13 +142,8 @@ function BadgeManagement() {
       } else {
         setFileList([]);
       }
-    } else {
-      setEditingBadge(null);
-      form.resetFields();
-      form.setFieldsValue({ isActive: true });
-      setFileList([]);
+      setIsModalVisible(true);
     }
-    setIsModalVisible(true);
   };
 
   const handleCancel = () => {
@@ -184,24 +170,14 @@ function BadgeManagement() {
         }
       }
 
-      if (editingBadge) {
-        // Update existing badge
-        await badgeService.updateBadge(editingBadge.badgeId, values);
-        message.success("Badge updated successfully!");
-        // Refresh badges list
-        await fetchBadges();
-      } else {
-        // Add new badge
-        await badgeService.createBadge(values);
-        message.success("Badge created successfully!");
-        // Refresh badges list
-        await fetchBadges();
-      }
+      await badgeService.updateBadge(editingBadge.badgeId, values);
+      message.success("Badge updated successfully!");
+      await fetchBadges();
 
       handleCancel();
     } catch (error) {
       console.error("Operation failed:", error);
-      message.error(`Failed to ${editingBadge ? "update" : "create"} badge`);
+      message.error("Failed to update badge");
     } finally {
       setSubmitLoading(false);
     }
@@ -281,7 +257,6 @@ function BadgeManagement() {
     },
   ];
 
-  // Filter options
   const filterOptions = [
     {
       placeholder: "Filter by Status",
@@ -295,7 +270,6 @@ function BadgeManagement() {
     },
   ];
 
-  // Bulk actions
   const bulkActions = [
     {
       label: "Activate Selected",
@@ -332,20 +306,6 @@ function BadgeManagement() {
       <div className={styles.badgeManagementPage}>
         {/* Header */}
         <h2>Badge Management</h2>
-
-        {/* Add Badge Button */}
-        <div style={{ marginBottom: "24px" }}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => showModal()}
-            size="large"
-            className={styles.addButton}
-          >
-            Add Badge
-          </Button>
-        </div>
-
         {/* Filters */}
         <FilterBar
           searchPlaceholder="Search badges..."
@@ -353,7 +313,6 @@ function BadgeManagement() {
           onSearchChange={(e) => setSearch(e.target.value)}
           filters={filterOptions}
         />
-
         {/* Bulk Actions */}
         {selectedRowKeys.length > 0 && (
           <BulkActionBar
@@ -361,7 +320,6 @@ function BadgeManagement() {
             actions={bulkActions}
           />
         )}
-
         {/* Table */}
         <div className={styles.tableContainer}>
           {loading ? (
@@ -377,16 +335,15 @@ function BadgeManagement() {
               onSelectRow={handleSelectRow}
             />
           )}
-        </div>
-
+        </div>{" "}
         {/* Modal */}
         <Modal
-          title={editingBadge ? "Edit Badge" : "Add New Badge"}
+          title="Edit Badge"
           open={isModalVisible}
           onOk={handleSubmit}
           onCancel={handleCancel}
           width={600}
-          okText={editingBadge ? "Update" : "Create"}
+          okText="Update"
           confirmLoading={submitLoading}
         >
           <Form

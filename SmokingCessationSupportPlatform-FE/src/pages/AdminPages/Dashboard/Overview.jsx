@@ -1,61 +1,52 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "../../../components/layout/AdminLayout.jsx";
-import { Row, Col, Card, Typography, Button, Space } from "antd";
-import {
-  DownloadOutlined,
-  UserOutlined,
-  DollarOutlined,
-} from "@ant-design/icons";
+import { Row, Col, Card, Typography } from "antd";
+import { UserOutlined, DollarOutlined } from "@ant-design/icons";
 import { userService } from "../../../services/userService.js";
 import Revenue from "../../../components/admin/dashboard/RevenueBlock/Revenue";
 import UserGrowth from "../../../components/admin/dashboard/UserGrowthBlock/UserGrowth";
-import QuitRate from "../../../components/admin/dashboard/QuitRateBlock/QuitRate";
 import OverallMembers from "../../../components/admin/dashboard/OverallMembersBlock/OverallMembers";
-import SuccessRate from "../../../components/admin/dashboard/SuccessRateBlock/SuccessRate";
 import { dashboardService } from "../../../services/dashboardService.js";
 
 const { Title, Text } = Typography;
 
-// Theme Colors
 const THEME_COLORS = {
-  primary: "#1814F3", // Main blue color from image
+  primary: "#1814F3",
   secondary: "#5572AF",
-  success: "#16c784", // Green from image for positive values
+  success: "#16c784",
   danger: "#FF4D4F",
-  warning: "#FFD600", // Yellow from image
-  accent: "#FF4FEE", // Pink from image (for pie chart)
-  blue: "#1814F3", // Deep blue
-  orange: "#FF7723", // Orange from pie chart
-  darkBlue: "#2A324B", // Dark blue/navy from pie chart
-  purple: "#9747FF", // Purple accent
+  warning: "#FFD600",
+  accent: "#FF4FEE",
+  blue: "#1814F3",
+  orange: "#FF7723",
+  darkBlue: "#2A324B",
+  purple: "#9747FF",
 };
 
-// UI Colors for Components
 const UI_COLORS = {
   cards: {
-    totalUsers: "#1814F3", // Main blue
-    activeUsers: "#16c784", // Green for success
-    totalRevenue: "#FFD600", // Yellow for revenue
-    avgQuitDays: "#FF4FEE", // Pink accent
+    totalUsers: "#1814F3",
+    activeUsers: "#16c784",
+    totalRevenue: "#FFD600",
+    avgQuitDays: "#FF4FEE",
   },
   backgrounds: {
-    totalUsers: "#EDF0FF", // Light blue for blue cards
-    activeUsers: "#EDFBF5", // Light green for active users
-    totalRevenue: "#FFFAED", // Light yellow for revenue
-    avgQuitDays: "#FDF0F0", // Light pink for quit days
+    totalUsers: "#EDF0FF",
+    activeUsers: "#EDFBF5",
+    totalRevenue: "#FFFAED",
+    avgQuitDays: "#FDF0F0",
   },
   charts: {
-    primary: "#1814F3", // Main blue for primary chart elements
-    secondary: "#FFD600", // Yellow for secondary chart elements
-    accent1: "#FF4FEE", // Pink for accent chart elements
-    accent2: "#FF7723", // Orange for accent chart elements
-    accent3: "#16c784", // Green for accent chart elements
-    background: "#FFFFFF", // White chart background
-    grid: "#EEEEEE", // Light grey for chart grid lines
+    primary: "#1814F3",
+    secondary: "#FFD600",
+    accent1: "#FF4FEE",
+    accent2: "#FF7723",
+    accent3: "#16c784",
+    background: "#FFFFFF",
+    grid: "#EEEEEE",
   },
 };
 
-// Dashboard Statistics Configuration - Initial values
 const INITIAL_STATS = [
   {
     title: "Total Users",
@@ -85,7 +76,7 @@ const CHART_CONFIG = [
   {
     title: "User Growth",
     component: UserGrowth,
-    span: { xs: 24 }, // Full width
+    span: { xs: 24 },
     key: "userGrowth",
   },
   {
@@ -95,23 +86,11 @@ const CHART_CONFIG = [
     key: "revenue",
   },
   {
-    title: "Member Type Distribution",
-    component: QuitRate,
-    span: { xs: 24, lg: 12 },
-    key: "memberType",
-  },
-  {
     title: "Overall Members Distribution",
     component: OverallMembers,
     span: { xs: 24, lg: 12 },
     key: "overallMembers",
   },
-  // {
-  //   title: "Success Rate Over The Months",
-  //   component: SuccessRate,
-  //   span: { xs: 24, lg: 12 },
-  //   key: "successRate",
-  // },
 ];
 
 // Component: Dashboard Header
@@ -291,24 +270,18 @@ const Overview = () => {
   useEffect(() => {
     const fetchUserStats = async () => {
       try {
-        // Fetch users from API
         const userData = await userService.fetchAdminUsers();
 
-        // Fetch revenue data
         const revenueValue = await dashboardService.getTotalRevenue();
 
         if (userData && Array.isArray(userData)) {
-          // Calculate total users
           const totalUsers = userData.length;
 
-          // Calculate active users (users who are not blocked)
           const activeUsers = userData.filter((user) => !user.block).length;
 
-          // Calculate percentages
           const activePercentage =
             totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
 
-          // Format revenue value
           const formatRevenue = (value) => {
             if (value >= 1000000) {
               return `${(value / 1000000).toFixed(1)}M VND`;
@@ -318,7 +291,6 @@ const Overview = () => {
             return `${value} VND`;
           };
 
-          // Update stats with real data
           setStats([
             {
               title: "Total Users",
@@ -336,7 +308,7 @@ const Overview = () => {
             },
             {
               title: "Total Revenue",
-              value: formatRevenue(revenueValue || 0), // revenueValue = 198
+              value: formatRevenue(revenueValue || 0),
               change: "+0",
               icon: DollarOutlined,
               colorKey: "totalRevenue",

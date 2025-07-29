@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Modal,
   Form,
@@ -21,51 +21,50 @@ import {
   SaveOutlined,
   CloseOutlined,
   StopOutlined,
+  CameraOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { userService } from "../../../services/userService.js";
+import uploadFile from "../../../store/utils/file";
 import styles from "./ModalForEditUser.module.css";
 
 const { Title, Text } = Typography;
 
-// --- Sub-components for better maintainability ---
-
-const UserInfoHeader = ({ userData }) => (
-  <div className={styles.userHeader}>
-    {userData?.avatarUrl ? (
-      <Avatar
-        size={60}
-        src={userData.avatarUrl}
-        alt="User Avatar"
-        className={styles.avatar}
-      />
-    ) : (
-      <Avatar size={60} icon={<UserOutlined />} className={styles.avatar} />
-    )}
-    <div className={styles.userInfo}>
-      <Title level={4} className={styles.userName}>
-        {userData.fullName}
-      </Title>
-      <div className={styles.userIdContainer}>
-        <Text type="secondary">User ID: #{userData.userId}</Text>
-        <span
-          className={`${styles.statusBadge} ${
-            userData.hasActive ? styles.statusActive : styles.statusBlocked
-          }`}
-        >
-          {userData.hasActive ? <CheckCircleOutlined /> : <StopOutlined />}
-          {userData.hasActive ? "Pro Member" : "Free Member"}
-        </span>
-      </div>
-    </div>
-  </div>
-);
-
-const BasicInfoForm = () => (
+const BasicInfoForm = ({
+  userAvatar,
+  handleChangeAvatar,
+  avatarLoading,
+  fileInputRef,
+  handleAvatarChange,
+}) => (
   <>
-    <Title level={5} className={styles.sectionTitle}>
-      Basic Information
-    </Title>
+    <Row gutter={16}>
+      <Col span={24}>
+        <Form.Item>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            {userAvatar ? (
+              <Avatar size={64} src={userAvatar} alt="User Avatar" />
+            ) : (
+              <Avatar size={64} icon={<UserOutlined />} />
+            )}
+            <Button
+              icon={<CameraOutlined />}
+              onClick={handleChangeAvatar}
+              loading={avatarLoading}
+            >
+              {avatarLoading ? "Uploading..." : "Upload Avatar"}
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleAvatarChange}
+              accept="image/jpeg,image/jpg,image/png,image/gif"
+              style={{ display: "none" }}
+            />
+          </div>
+        </Form.Item>
+      </Col>
+    </Row>
     <Row gutter={16}>
       <Col span={12}>
         <Form.Item
@@ -100,8 +99,14 @@ const BasicInfoForm = () => (
         </Form.Item>
       </Col>
       <Col span={12}>
-        <Form.Item label="Avatar URL" name="avatarUrl">
-          <Input placeholder="Enter avatar URL" />
+        <Form.Item label="Gender" name="gender">
+          <Select placeholder="Select gender">
+            {genderOptions.map((option) => (
+              <Select.Option key={option.value} value={option.value}>
+                {option.label}
+              </Select.Option>
+            ))}
+          </Select>
         </Form.Item>
       </Col>
     </Row>
@@ -116,14 +121,8 @@ const BasicInfoForm = () => (
         </Form.Item>
       </Col>
       <Col span={12}>
-        <Form.Item label="Gender" name="gender">
-          <Select placeholder="Select gender">
-            {genderOptions.map((option) => (
-              <Select.Option key={option.value} value={option.value}>
-                {option.label}
-              </Select.Option>
-            ))}
-          </Select>
+        <Form.Item label="Note" name="note">
+          <Input.TextArea rows={3} placeholder="Enter note (optional)" />
         </Form.Item>
       </Col>
     </Row>
@@ -149,10 +148,9 @@ const genderOptions = [
 ];
 
 const roleOptions = [
-  { value: "guest", label: "Guest" },
-  { value: "member", label: "Member" },
+  { value: "user", label: "User" },
   { value: "admin", label: "Admin" },
-  { value: "coach", label: "Coach" },
+  { value: "mentor", label: "Mentor" },
 ];
 
 const AccountStatusForm = () => (
@@ -260,56 +258,77 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [formKey, setFormKey] = useState(0); // Add this to force re-render
+  const [formKey, setFormKey] = useState(0);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [userAvatar, setUserAvatar] = useState(null);
+  const fileInputRef = useRef(null);
 
   const handleClose = useCallback(() => {
     if (submitting) return;
     form.resetFields();
     setUserData(null);
+    setUserAvatar(null);
     setFormKey(0);
     onClose();
   }, [form, onClose, submitting]);
 
+  const handleChangeAvatar = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      message.error("Please select a valid image file (JPEG, PNG, GIF)");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      message.error("File size must be less than 5MB");
+      return;
+    }
+
+    try {
+      setAvatarLoading(true);
+      const avatarUrl = await uploadFile(file);
+      setUserAvatar(avatarUrl);
+      message.success("Avatar uploaded successfully");
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      message.error("Failed to upload avatar");
+    } finally {
+      setAvatarLoading(false);
+      event.target.value = "";
+    }
+  };
+
   const fetchUserData = useCallback(async () => {
     if (!userId) return;
+
     setLoading(true);
     try {
       const data = await userService.getUserById(userId);
       setUserData(data);
-      // Debug logging
-      console.log("User data fetched:", data);
-      console.log(
-        "hasActive value:",
-        data.hasActive,
-        "type:",
-        typeof data.hasActive
-      );
-      console.log(
-        "isVerified value:",
-        data.isVerified,
-        "type:",
-        typeof data.isVerified
-      );
+      setUserAvatar(data.avatarUrl || null);
 
-      // Set form values immediately without setTimeout
       form.setFieldsValue({
         fullName: data.fullName || "",
         profileName: data.profileName || "",
         email: data.email || "",
+        note: data.note || "",
         avatarUrl: data.avatarUrl || "",
         birthDate: data.birthDate ? dayjs(data.birthDate) : null,
         gender: data.gender || undefined,
-        role: data.role || "guest",
+        role: data.role || "user",
         hasActive: Boolean(data.hasActive),
         isVerified: Boolean(data.isVerified),
       });
 
-      console.log("Form values set:", {
-        hasActive: Boolean(data.hasActive),
-        isVerified: Boolean(data.isVerified),
-      });
-
-      // Force form re-render
       setFormKey((prev) => prev + 1);
     } catch (error) {
       message.error(error.message || "Failed to load user data.");
@@ -327,25 +346,26 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
 
   const handleSubmit = async (values) => {
     setSubmitting(true);
+
     try {
       const updateData = {
         email: values.email,
         profileName: values.profileName,
         fullName: values.fullName,
-        avatarUrl: values.avatarUrl || null,
+        note: values.note || "",
+        avatarUrl: userAvatar || null,
         birthDate: values.birthDate
           ? values.birthDate.format("YYYY-MM-DD")
           : null,
         gender: values.gender || "male",
-        role: values.role || "guest",
+        role: values.role || "user",
         hasActive: Boolean(values.hasActive),
         isVerified: Boolean(values.isVerified),
       };
 
-      console.log("Submitting data:", updateData);
-
       await userService.updateUser(userId, updateData);
       message.success("User updated successfully!");
+
       if (onUserUpdated) onUserUpdated();
       handleClose();
     } catch (error) {
@@ -373,7 +393,7 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
           <Title level={3} className={styles.title}>
             Edit User Information
           </Title>
-          <UserInfoHeader userData={userData} />
+
           <Form
             key={formKey}
             form={form}
@@ -384,15 +404,22 @@ const ModalForEditUser = ({ open, onClose, userId, onUserUpdated }) => {
               fullName: userData?.fullName || "",
               profileName: userData?.profileName || "",
               email: userData?.email || "",
+              note: userData?.note || "",
               avatarUrl: userData?.avatarUrl || "",
               birthDate: userData?.birthDate ? dayjs(userData.birthDate) : null,
               gender: userData?.gender || undefined,
-              role: userData?.role || "guest",
+              role: userData?.role || "user",
               hasActive: Boolean(userData?.hasActive),
               isVerified: Boolean(userData?.isVerified),
             }}
           >
-            <BasicInfoForm />
+            <BasicInfoForm
+              userAvatar={userAvatar}
+              handleChangeAvatar={handleChangeAvatar}
+              avatarLoading={avatarLoading}
+              fileInputRef={fileInputRef}
+              handleAvatarChange={handleAvatarChange}
+            />
             <Divider />
             <AccountStatusForm />
             <Divider />

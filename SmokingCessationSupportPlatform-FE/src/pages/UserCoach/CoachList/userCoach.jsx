@@ -67,9 +67,10 @@ function UserCoach() {
           ) : mentors.length === 0 ? (
             <Empty description="No Mentors Available" />
           ) : (
-            mentors.map((coach) => (
-              <div className="wrapper__content-coach" key={coach.mentor.userId}>
+            <div className="wrapper__content-coach">
+              {mentors.map((coach) => (
                 <Card
+                  key={coach.mentor.userId}
                   hoverable
                   className="wrapper__content-coach-card"
                   onClick={() =>
@@ -105,8 +106,8 @@ function UserCoach() {
                     <RightOutlined />
                   </Button>
                 </Card>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>

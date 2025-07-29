@@ -125,7 +125,7 @@ const Sidebar = () => {
                 Schedule Management
               </NavLink>
             </li>
-            <li>
+            {/* <li>
               <NavLink
                 to="/admin/membership-payment"
                 className={({ isActive }) =>
@@ -137,7 +137,7 @@ const Sidebar = () => {
                 <CreditCardOutlined className="sidebar__icon" />
                 Membership & Payment
               </NavLink>
-            </li>
+            </li> */}
           </ul>
         </nav>
       </div>

@@ -1,17 +1,15 @@
 .wrapper__content-coach {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     margin-bottom: 50px;
 }
 
 .wrapper__content-coach-card {
-    margin: 20px 0;
+    margin: 0;
     padding: 5px;
     border: 2px solid #f0eeee;
-    min-width: 48%;
-    max-width: 48%;
+    width: 100%;
     height: 270px;
     border-radius: 20px;
 }
