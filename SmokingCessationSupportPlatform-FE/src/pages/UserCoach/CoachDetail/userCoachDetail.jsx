@@ -13,7 +13,13 @@ import {
 } from "antd";
 import Header from "../../../components/header/header";
 import Footer from "../../../components/footer/footer";
-import { MailTwoTone, PlusOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  ArrowRightOutlined,
+  MailTwoTone,
+  PlusOutlined,
+  RightOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import api from "../../../config/axios";
 import { useNavigate, useParams } from "react-router-dom";
@@ -282,6 +288,14 @@ function UserCoachDetail() {
               {coach.mentor.fullName}. Available times are listed below for each
               date.
             </p>
+            <Button
+              className="wrapper__coach-schedule-booking-btn1"
+              color="primary"
+              variant="filled"
+              onClick={() => navigate("/user-profile/bookings")}
+            >
+              Go to My Booking <RightOutlined />
+            </Button>
 
             {slotsLoading ? (
               <div style={{ textAlign: "center", padding: "50px" }}>
@@ -293,35 +307,37 @@ function UserCoachDetail() {
                 style={{ margin: "50px 0" }}
               />
             ) : (
-              Object.entries(groupedSlots).map(([date, dateSlots]) => (
-                <div key={date} className="wrapper__coach-schedule-detail">
-                  <p className="wrapper__coach-schedule-detail-date">
-                    {formatDate(date)}
-                  </p>
-                  <div className="wrapper__coach-schedule-detail-card">
-                    {dateSlots
-                      .filter((slot) => !slot.booked)
-                      .sort((a, b) => a.slotNumber - b.slotNumber)
-                      .map((slot) => (
-                        <Card
-                          key={slot.slotId}
-                          hoverable
-                          className={`wrapper__coach-schedule-detail-card-time ${
-                            isSlotSelected(slot.slotId) ? "selected" : ""
-                          }`}
-                          onClick={() => handleSlotSelect(slot.slotId)}
-                        >
-                          <p className="wrapper__coach-schedule-detail-card-time-slot">
-                            Slot {slot.slotNumber}
-                          </p>
-                          <p className="wrapper__coach-schedule-detail-card-time-detail">
-                            {getSlotTimeRange(slot.slotNumber)}
-                          </p>
-                        </Card>
-                      ))}
+              Object.entries(groupedSlots)
+                .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+                .map(([date, dateSlots]) => (
+                  <div key={date} className="wrapper__coach-schedule-detail">
+                    <p className="wrapper__coach-schedule-detail-date">
+                      {formatDate(date)}
+                    </p>
+                    <div className="wrapper__coach-schedule-detail-card">
+                      {dateSlots
+                        .filter((slot) => !slot.booked)
+                        .sort((a, b) => a.slotNumber - b.slotNumber)
+                        .map((slot) => (
+                          <Card
+                            key={slot.slotId}
+                            hoverable
+                            className={`wrapper__coach-schedule-detail-card-time ${
+                              isSlotSelected(slot.slotId) ? "selected" : ""
+                            }`}
+                            onClick={() => handleSlotSelect(slot.slotId)}
+                          >
+                            <p className="wrapper__coach-schedule-detail-card-time-slot">
+                              Slot {slot.slotNumber}
+                            </p>
+                            <p className="wrapper__coach-schedule-detail-card-time-detail">
+                              {getSlotTimeRange(slot.slotNumber)}
+                            </p>
+                          </Card>
+                        ))}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))
             )}
 
             <div className="wrapper__coach-schedule-booking">

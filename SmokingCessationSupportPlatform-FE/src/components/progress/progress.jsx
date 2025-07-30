@@ -79,7 +79,11 @@ function UserProgress() {
                 <div className="progress__content-card-item">
                   <DollarOutlined className="progress__content-card-item-money" />
                   <span className="progress__content-card-item-number">
-                    {savingData?.actualSaving || 0}
+                    {savingData?.actualSaving
+                      ? new Intl.NumberFormat("vi-VN").format(
+                          savingData.actualSaving
+                        )
+                      : "0"}
                   </span>
                   <span className="progress__content-card-item-text">
                     money saved

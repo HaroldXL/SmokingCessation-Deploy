@@ -145,11 +145,10 @@
     margin-top: 5px;
 }
 
-.wrapper__coach-feedback-btn {
-
-    height: 40px;
+.wrapper__coach-schedule-booking-btn1 {
+    height: 45px;
     font-size: 16px;
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 20px;
     margin-bottom: 10px;
 }

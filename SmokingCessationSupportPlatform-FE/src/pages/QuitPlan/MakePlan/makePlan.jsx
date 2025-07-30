@@ -248,7 +248,7 @@ function MakePlan() {
                       min={0}
                       variant="filled"
                       formatter={(value) =>
-                        `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        `VND ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                       parser={(value) =>
                         value === null || value === void 0

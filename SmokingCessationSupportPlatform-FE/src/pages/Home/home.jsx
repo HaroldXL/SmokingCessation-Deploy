@@ -2,7 +2,7 @@ import Header from "../../components/header/header";
 import Poster from "../../components/poster/poster";
 import Footer from "../../components/footer/footer";
 import "./home.css";
-import { Affix, Button, Card, message, Spin } from "antd";
+import { Affix, Button, Card, message, Spin, Collapse } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import api from "../../config/axios";
@@ -81,7 +81,7 @@ function Home() {
 
       <div className="wrapper">
         <div className="wrapper__title">
-          <p>Explore</p>
+          <p>Explore Our Features</p>
         </div>
         <div className="wrapper__card">
           {userProfile?.status === "active" ? (
@@ -155,7 +155,7 @@ function Home() {
         <div className="custom-divider" />
 
         <div className="wrapper__title">
-          <p>Community</p>
+          <p>Our Community</p>
         </div>
         <div className="wrapper__card">
           {randomPosts.map((post) => (
@@ -217,6 +217,99 @@ function Home() {
               </div>
             </Card>
           ))}
+        </div>
+
+        <div className="custom-divider" />
+        <div className="wrapper__title">
+          <p>Frequently Asked Questions</p>
+        </div>
+        <p className="wrapper__faq-description">
+          Here are some frequently asked questions about quitting smoking and
+          our services.
+        </p>
+        <div className="wrapper__faq">
+          <Collapse
+            size="large"
+            items={[
+              {
+                key: "1",
+                label: "How long does it take to quit smoking successfully?",
+                children: (
+                  <p>
+                    The timeline varies for each person. Physical withdrawal
+                    symptoms typically peak within the first 3 days and can last
+                    up to 2-4 weeks. However, breaking the psychological habit
+                    can take longer. Our personalized quit plans help you stay
+                    on track throughout your journey.
+                  </p>
+                ),
+              },
+              {
+                key: "2",
+                label: "What are the benefits of using Quitlt?",
+                children: (
+                  <p>
+                    Quitlt provides personalized quit plans, progress tracking,
+                    community support, and professional consultation. You can
+                    monitor your health improvements, calculate money saved,
+                    connect with others on similar journeys, and get guidance
+                    from certified mentors.
+                  </p>
+                ),
+              },
+              {
+                key: "3",
+                label: "Is the consultation service free?",
+                children: (
+                  <p>
+                    We offer free consultation sessions with our certified
+                    mentors and healthcare professionals. However, some premium
+                    features and extended consultation sessions may require a
+                    PRO membership upgrade.
+                  </p>
+                ),
+              },
+              {
+                key: "4",
+                label: "How does the community feature work?",
+                children: (
+                  <p>
+                    Our community is a safe space where you can share your
+                    experiences, ask questions, offer support to others, and
+                    celebrate milestones together. You can post updates,
+                    participate in discussions, and find motivation from people
+                    who understand your journey.
+                  </p>
+                ),
+              },
+              {
+                key: "5",
+                label: "What happens if I have a relapse?",
+                children: (
+                  <p>
+                    Relapses are common and part of the journey for many people.
+                    Quitlt allows you to record smoking events, track triggers,
+                    and adjust your quit plan accordingly. Our mentors can help
+                    you learn from setbacks and develop better strategies moving
+                    forward.
+                  </p>
+                ),
+              },
+              {
+                key: "6",
+                label: "How accurate is the money-saving calculator?",
+                children: (
+                  <p>
+                    Our calculator uses the smoking habits and costs you provide
+                    in your profile to estimate savings. It calculates daily,
+                    weekly, monthly, and yearly projections based on your
+                    previous spending patterns. The calculations are updated in
+                    real-time as you progress.
+                  </p>
+                ),
+              },
+            ]}
+          />
         </div>
       </div>
       <Footer />

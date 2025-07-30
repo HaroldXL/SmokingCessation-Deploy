@@ -286,7 +286,12 @@ function PlanDetail() {
                     1 week smoke-free
                   </span>
                   <span className="wrapper__content-detail-saving-value">
-                    ${savingData?.perWeek?.toFixed(2) || "0.00"}
+                    {savingData?.perWeek
+                      ? new Intl.NumberFormat("vi-VN").format(
+                          savingData.perWeek
+                        )
+                      : "0"}{" "}
+                    VND
                   </span>
                 </p>
               </div>
@@ -297,7 +302,12 @@ function PlanDetail() {
                     1 month smoke-free
                   </span>
                   <span className="wrapper__content-detail-saving-value">
-                    ${savingData?.perMonth?.toFixed(2) || "0.00"}
+                    {savingData?.perMonth
+                      ? new Intl.NumberFormat("vi-VN").format(
+                          savingData.perMonth
+                        )
+                      : "0"}{" "}
+                    VND
                   </span>
                 </p>
               </div>
@@ -308,7 +318,12 @@ function PlanDetail() {
                     1 year smoke-free
                   </span>
                   <span className="wrapper__content-detail-saving-value">
-                    ${savingData?.perYear?.toFixed(2) || "0.00"}
+                    {savingData?.perYear
+                      ? new Intl.NumberFormat("vi-VN").format(
+                          savingData.perYear
+                        )
+                      : "0"}{" "}
+                    VND
                   </span>
                 </p>
               </div>
@@ -335,7 +350,11 @@ function PlanDetail() {
                   <p>
                     <DollarOutlined className="wrapper__content-detail-progress-item-money" />
                     <span className="wrapper__content-detail-progress-item-number">
-                      {savingData?.actualSaving || 0}
+                      {savingData?.actualSaving
+                        ? new Intl.NumberFormat("vi-VN").format(
+                            savingData.actualSaving
+                          )
+                        : "0"}
                     </span>
                     money saved
                   </p>
