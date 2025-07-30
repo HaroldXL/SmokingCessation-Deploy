@@ -477,11 +477,11 @@ function ScheduleManagement() {
   };
 
   const getSlotActionItems = (day, slotId) => [
-    {
-      key: "edit",
-      label: "Edit Slot",
-      onClick: () => handleSlotAction("edit", day, slotId),
-    },
+    // {
+    //   key: "edit",
+    //   label: "Edit Slot",
+    //   onClick: () => handleSlotAction("edit", day, slotId),
+    // },
     {
       key: "delete",
       label: "Delete Slot",
