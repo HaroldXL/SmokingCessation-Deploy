@@ -61,7 +61,6 @@ function ProTask() {
       const response = await api.get("/plan-tasks-pro/my-tasks");
       let tasksData = response.data;
 
-      // Auto-update overdue pending tasks to failed
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -74,7 +73,6 @@ function ProTask() {
         return taskDate.getTime() < today.getTime();
       });
 
-      // Update overdue tasks to failed
       for (const task of overdueTasksToUpdate) {
         try {
           await api.put(
@@ -101,7 +99,6 @@ function ProTask() {
       const filtered = tasksData.filter((task) => task.status === activeFilter);
       setFilteredTasks(filtered);
 
-      // Show message if any tasks were auto-updated
       if (overdueTasksToUpdate.length > 0) {
         message.warning(
           `${overdueTasksToUpdate.length} overdue task(s) were automatically marked as failed.`
