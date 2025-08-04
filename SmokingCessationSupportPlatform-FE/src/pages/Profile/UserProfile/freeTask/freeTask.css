@@ -1,7 +1,4 @@
-.wrapper__profile-free-task-description {
-  font-weight: lighter;
-  margin-bottom: 20px;
-}
+
 
 .wrapper__profile-free-task-header {
   display: flex;
@@ -18,7 +15,7 @@
 }
 
 .wrapper__profile-free-task-categor-card {
-    width: 48%;
+    width: 31%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,4 +41,9 @@
     margin-bottom: 5px;
     font-size: 16px;
     padding: 2px 5px 5px 5px;
+}
+
+.wrapper__profile-free-task-card-delete-btn {
+    height: 31px;
+    border-radius: 5px;
 }

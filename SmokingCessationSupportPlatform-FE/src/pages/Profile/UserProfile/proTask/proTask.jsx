@@ -11,6 +11,7 @@ import {
   Button,
   Dropdown,
   Modal,
+  Popconfirm,
 } from "antd";
 import Header from "../../../../components/header/header";
 import Footer from "../../../../components/footer/footer";
@@ -97,7 +98,6 @@ function ProTask() {
 
       setTasks(tasksData);
 
-      // Filter tasks based on current active filter
       const filtered = tasksData.filter((task) => task.status === activeFilter);
       setFilteredTasks(filtered);
 
@@ -148,7 +148,6 @@ function ProTask() {
 
       message.success(`Task marked as ${newStatus}`);
 
-      // Refresh tasks after updating
       fetchTasks();
     } catch (error) {
       console.error("Error updating task status:", error);
@@ -156,18 +155,6 @@ function ProTask() {
     } finally {
       setUpdatingTaskId(null);
     }
-  };
-
-  const handleUpdateTaskStatus = (taskId, newStatus) => {
-    Modal.confirm({
-      title: `Mark Task as ${
-        newStatus.charAt(0).toUpperCase() + newStatus.slice(1)
-      }`,
-      content: `Are you sure you want to mark this task as ${newStatus}?`,
-      okText: "Yes",
-      cancelText: "No",
-      onOk: () => updateTaskStatus(taskId, newStatus),
-    });
   };
 
   const getTaskActions = (task) => {
@@ -192,22 +179,36 @@ function ProTask() {
       {
         key: "completed",
         label: (
-          <Space>
-            <CheckCircleOutlined style={{ color: "#52c41a" }} />
-            Mark as Completed
-          </Space>
+          <Popconfirm
+            title="Mark task as Completed"
+            description="Are you sure you want to mark this task as Completed?"
+            onConfirm={() => updateTaskStatus(task.taskId, "completed")}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Space>
+              <CheckCircleOutlined style={{ color: "#52c41a" }} />
+              Mark as Completed
+            </Space>
+          </Popconfirm>
         ),
-        onClick: () => handleUpdateTaskStatus(task.taskId, "completed"),
       },
       {
         key: "failed",
         label: (
-          <Space>
-            <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
-            Mark as Failed
-          </Space>
+          <Popconfirm
+            title="Mark task as Failed"
+            description="Are you sure you want to mark this task as Failed?"
+            onConfirm={() => updateTaskStatus(task.taskId, "failed")}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Space>
+              <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+              Mark as Failed
+            </Space>
+          </Popconfirm>
         ),
-        onClick: () => handleUpdateTaskStatus(task.taskId, "failed"),
       },
     ];
   };

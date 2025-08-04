@@ -8,13 +8,14 @@ import {
   Form,
   DatePicker,
   InputNumber,
-  Select,
   message,
   Spin,
   Empty,
   Space,
   Checkbox,
   Tag,
+  Dropdown,
+  Popconfirm,
 } from "antd";
 import Header from "../../../../components/header/header";
 import Footer from "../../../../components/footer/footer";
@@ -23,8 +24,11 @@ import {
   PlusOutlined,
   CalendarTwoTone,
   CheckCircleTwoTone,
-  DeleteTwoTone,
   ExclamationCircleFilled,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DownOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useEffect, useState, useCallback } from "react";
 import api from "../../../../config/axios";
@@ -37,6 +41,7 @@ function FreeTask() {
   const [activeFilter, setActiveFilter] = useState("pending");
   const [createTaskModal, setCreateTaskModal] = useState(false);
   const [supportMeasures, setSupportMeasures] = useState([]);
+  const [updatingTaskId, setUpdatingTaskId] = useState(null);
   const [createTaskForm] = Form.useForm();
   const { confirm } = Modal;
 
@@ -63,7 +68,6 @@ function FreeTask() {
       const response = await api.get("/tasks/free");
       setTasks(response.data);
 
-      // Filter tasks based on current active filter
       const filtered = response.data.filter(
         (task) => task.status === activeFilter
       );
@@ -102,7 +106,13 @@ function FreeTask() {
       fetchTasks();
     } catch (error) {
       console.error("Error creating task:", error);
-      message.error("Failed to create task");
+
+      const errorMessage = error.response?.data?.message;
+      if (errorMessage === "Bạn đã tạo nhiệm vụ cho ngày này rồi.") {
+        message.error("You have already created Task for this day.");
+      } else {
+        message.error("Failed to create task");
+      }
     }
   };
 
@@ -122,6 +132,7 @@ function FreeTask() {
       title: "Are you sure you want to delete this task?",
       icon: <ExclamationCircleFilled />,
       content: "This action cannot be undone.",
+      centered: true,
       okText: "Yes, Delete",
       okType: "danger",
       cancelText: "Cancel",
@@ -131,21 +142,71 @@ function FreeTask() {
     });
   };
 
-  const handleCompleteTask = async (taskId) => {
-    try {
-      await api.put(`/tasks/task-free/${taskId}/status?status=completed`);
-      message.success("Task marked as completed!");
-      fetchTasks();
-    } catch (error) {
-      console.error("Error completing task:", error);
-      message.error("Failed to complete task");
-    }
-  };
-
   const canCompleteTask = (taskDay) => {
     const today = dayjs().format("YYYY-MM-DD");
     const taskDate = dayjs(taskDay).format("YYYY-MM-DD");
     return taskDate <= today;
+  };
+
+  const updateTaskStatus = async (taskId, newStatus) => {
+    try {
+      setUpdatingTaskId(taskId);
+      await api.put(`/tasks/task-free/${taskId}/status?status=${newStatus}`);
+      message.success(`Task marked as ${newStatus}!`);
+      fetchTasks();
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      message.error("Failed to update task status");
+    } finally {
+      setUpdatingTaskId(null);
+    }
+  };
+
+  const getTaskActions = (task) => {
+    if (task.status !== "pending" || !canCompleteTask(task.taskDay)) {
+      return [];
+    }
+
+    return [
+      {
+        key: "completed",
+        label: (
+          <Popconfirm
+            title="Mark task as Completed"
+            description="Are you sure you want to mark this task as Completed?"
+            onConfirm={() => updateTaskStatus(task.taskId, "completed")}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Space>
+              <CheckCircleOutlined style={{ color: "#52c41a" }} />
+              Mark as Completed
+            </Space>
+          </Popconfirm>
+        ),
+      },
+      {
+        key: "failed",
+        label: (
+          <Popconfirm
+            title="Mark task as Failed"
+            description="Are you sure you want to mark this task as Failed?"
+            onConfirm={() => updateTaskStatus(task.taskId, "failed")}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Space>
+              <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+              Mark as Failed
+            </Space>
+          </Popconfirm>
+        ),
+      },
+    ];
+  };
+
+  const isTaskUpdateAllowed = (task) => {
+    return task.status === "pending" && canCompleteTask(task.taskDay);
   };
 
   useEffect(() => {
@@ -194,6 +255,15 @@ function FreeTask() {
               >
                 Completed
               </Card>
+              <Card
+                hoverable
+                className={`wrapper__profile-free-task-categor-card ${
+                  activeFilter === "failed" ? "active" : ""
+                }`}
+                onClick={() => filterTasks("failed")}
+              >
+                Failed
+              </Card>
             </div>
             <Divider className="divider" />
 
@@ -217,40 +287,49 @@ function FreeTask() {
                       Task Details
                     </p>
                     <Space>
-                      {task.status === "pending" ? (
-                        canCompleteTask(task.taskDay) ? (
-                          <Button
-                            color="primary"
-                            variant="filled"
-                            size="small"
-                            onClick={() => handleCompleteTask(task.taskId)}
+                      <Tag
+                        color={
+                          task.status === "completed"
+                            ? "green"
+                            : task.status === "failed"
+                            ? "red"
+                            : "blue"
+                        }
+                        style={{ fontSize: "12px", fontWeight: "500" }}
+                      >
+                        {task.status.charAt(0).toUpperCase() +
+                          task.status.slice(1)}
+                      </Tag>
+                      {task.status === "pending" &&
+                        isTaskUpdateAllowed(task) && (
+                          <Dropdown
+                            menu={{ items: getTaskActions(task) }}
+                            trigger={["click"]}
+                            placement="bottomRight"
                           >
-                            Mark as Completed
-                          </Button>
-                        ) : (
-                          <Button
-                            color="default"
-                            variant="filled"
-                            size="small"
-                            disabled
-                          >
+                            <Button
+                              type="text"
+                              icon={<DownOutlined />}
+                              loading={updatingTaskId === task.taskId}
+                              color="primary"
+                              variant="filled"
+                            >
+                              Update Status
+                            </Button>
+                          </Dropdown>
+                        )}
+                      {task.status === "pending" &&
+                        !isTaskUpdateAllowed(task) && (
+                          <Tag color="orange" style={{ fontSize: "12px" }}>
                             Wait for Task Day
-                          </Button>
-                        )
-                      ) : (
-                        <Button
-                          color="primary"
-                          variant="filled"
-                          size="small"
-                          disabled
-                        >
-                          Completed
-                        </Button>
-                      )}
+                          </Tag>
+                        )}
                       <Button
                         color="danger"
                         variant="filled"
                         size="small"
+                        icon={<DeleteOutlined />}
+                        className="wrapper__profile-free-task-card-delete-btn"
                         onClick={() => showDeleteConfirm(task.taskId)}
                       >
                         Delete

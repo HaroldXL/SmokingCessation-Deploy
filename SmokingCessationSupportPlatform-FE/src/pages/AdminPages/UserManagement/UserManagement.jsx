@@ -48,37 +48,37 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [isAddModalVisible, setIsAddModalVisible] = useState(false); // Thêm state cho Add User modal
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [userDetail, setUserDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
-  // Fetch users khi component mount
   useEffect(() => {
     const getUsers = async () => {
       setLoadingUsers(true);
       try {
         const data = await userService.fetchAdminUsers();
-        const transformedUsers = data.map((u) => {
-          // Chuẩn hóa membership
-          let membership = "Free Plan";
-          if (u.hasActive === true) {
-            membership = "Premium Plan";
-          }
-          return {
-            id: u.userId,
-            name: u.fullName,
-            email: u.email,
-            profile: u.profileName,
-            avatarUrl: u.avatarUrl || "",
-            role: u.role,
-            membership: membership,
-            joinDate: u.createdAt,
-            lastActivity: u.lastLogin,
-            status: u.isBlock ? "locked" : "active",
-          };
-        });
+        const transformedUsers = data
+          .filter((u) => u.isDelete === false) // Only show non-deleted users
+          .map((u) => {
+            let membership = "Free Plan";
+            if (u.hasActive === true) {
+              membership = "Premium Plan";
+            }
+            return {
+              id: u.userId,
+              name: u.fullName,
+              email: u.email,
+              profile: u.profileName,
+              avatarUrl: u.avatarUrl || "",
+              role: u.role,
+              membership: membership,
+              joinDate: u.createdAt,
+              lastActivity: u.lastLogin,
+              status: u.isBlock ? "locked" : "active",
+            };
+          });
         setUsers(transformedUsers);
       } catch (err) {
         console.error("Failed to fetch users", err);
@@ -88,9 +88,7 @@ const UserManagement = () => {
       }
     };
     getUsers();
-  }, []); //chỉ chạy một lần khi component mount
-
-  // Filter users khi filters hoặc users thay đổi
+  }, []);
   useEffect(() => {
     const filterUsers = () => {
       let result = users.filter((user) => {
@@ -120,7 +118,6 @@ const UserManagement = () => {
     filterUsers();
   }, [filters, users]);
 
-  // Delete single user
   const handleDeleteUser = async (userId, userName) => {
     confirm({
       title: "Delete User",
@@ -179,7 +176,6 @@ const UserManagement = () => {
     });
   };
 
-  // Đảm bảo function được định nghĩa đúng cách
   const handleViewDetails = async (user) => {
     try {
       setSelectedUser(user);
@@ -193,14 +189,11 @@ const UserManagement = () => {
           const data = await userService.getSmokingProgressId(user.id);
           console.log("Smoking progress data:", data);
 
-          // Data trả về là array, lấy phần tử đầu tiên
           if (data && data.length > 0) {
             const progressData = data[0];
 
-            // Format data cho modal
             const formattedData = {
               ...user,
-              // Smoking progress information
               daysSinceStart: progressData.daysSinceStart || 0,
               cigarettesAvoided: progressData.cigarettesAvoided || 0,
               moneySaved: progressData.moneySaved || 0,
@@ -215,7 +208,6 @@ const UserManagement = () => {
 
             setUserDetail(formattedData);
           } else {
-            // Không có smoking progress data
             setUserDetail({
               ...user,
               daysSinceStart: 0,
@@ -249,41 +241,38 @@ const UserManagement = () => {
     }
   };
 
-  // Handle edit user
   const handleEditUser = (user) => {
     setEditingUserId(user.id);
     setIsEditModalVisible(true);
   };
 
-  // Handle add user
   const handleAddUser = () => {
     setIsAddModalVisible(true);
   };
 
-  // Handle user updated
   const handleUserUpdated = async () => {
-    // Refresh users list after update
     try {
       setLoadingUsers(true);
       const data = await userService.fetchAdminUsers();
-      const transformedUsers = data.map((u) => {
-        // Chuẩn hóa membership
-        let membership = "Free Plan";
-        if (u.hasActive === true) {
-          membership = "Premium Plan";
-        }
-        return {
-          id: u.userId,
-          name: u.fullName,
-          email: u.email,
-          profile: u.profileName,
-          role: u.role,
-          membership: membership, // dùng giá trị đã chuẩn hóa
-          joinDate: u.createdAt,
-          lastActivity: u.lastLogin,
-          status: u.isBlock ? "locked" : "active",
-        };
-      });
+      const transformedUsers = data
+        .filter((u) => u.isDelete === false) // Only show non-deleted users
+        .map((u) => {
+          let membership = "Free Plan";
+          if (u.hasActive === true) {
+            membership = "Premium Plan";
+          }
+          return {
+            id: u.userId,
+            name: u.fullName,
+            email: u.email,
+            profile: u.profileName,
+            role: u.role,
+            membership: membership,
+            joinDate: u.createdAt,
+            lastActivity: u.lastLogin,
+            status: u.isBlock ? "locked" : "active",
+          };
+        });
       setUsers(transformedUsers);
     } catch (err) {
       console.error("Failed to refresh users", err);
@@ -293,9 +282,7 @@ const UserManagement = () => {
     }
   };
 
-  // Handle user added
   const handleUserAdded = async () => {
-    // Refresh users list after adding new user
     await handleUserUpdated();
     setIsAddModalVisible(false);
   };
@@ -358,7 +345,6 @@ const UserManagement = () => {
       title: "Action",
       dataIndex: "action",
       render: (value, row) => {
-        // Không hiển thị action nếu role là admin
         if (row.role === "admin" || row.role === "Admin") {
           return <span style={{ color: "#999", fontStyle: "italic" }}> </span>;
         }

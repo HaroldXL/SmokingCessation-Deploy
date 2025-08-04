@@ -185,7 +185,10 @@ export const questionService = {
 
   createAnswer: async (questionId, answerData) => {
     try {
-      const response = await api.post(`/admin/questions/${questionId}/answers`, answerData);
+      const response = await api.post(`/admin/questions/${questionId}/answers`, {
+        answerText: answerData.answerText,
+        points: answerData.points
+      });
       return response.data;
     } catch (error) {
       console.error("Error creating answer:", error);
@@ -195,7 +198,12 @@ export const questionService = {
 
   updateAnswer: async (answerId, answerData) => {
     try {
-      const response = await api.put(`/admin/answers/${answerId}`, answerData);
+      const response = await api.put(`/admin/answers/${answerId}`, null, {
+        params: {
+          newText: answerData.answerText,
+          newPoints: answerData.points
+        }
+      });
       return response.data;
     } catch (error) {
       console.error("Error updating answer:", error);

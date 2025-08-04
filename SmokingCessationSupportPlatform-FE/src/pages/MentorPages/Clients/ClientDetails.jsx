@@ -40,7 +40,6 @@ import {
   PlusOutlined,
   BellOutlined,
   DeleteOutlined,
-  MoreOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
 import { coachService } from "../../../services/coachService";
@@ -140,7 +139,6 @@ export const MentorClientDetails = () => {
     useState(false);
   const [notificationForm] = Form.useForm();
   const [sendingNotification, setSendingNotification] = useState(false);
-  const [updatingTaskId, setUpdatingTaskId] = useState(null);
 
   useEffect(() => {
     const buildClientData = (consultations, progressData) => {
@@ -406,61 +404,12 @@ export const MentorClientDetails = () => {
       fetchUserTasks();
     } catch (error) {
       console.error("Failed to save task:", error);
-      message.error("Failed to save task. Please try again.");
+
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to save task. Please try again.";
+      message.error(errorMessage);
     }
-  };
-
-  const handleUpdateTaskStatus = (taskId, newStatus) => {
-    Modal.confirm({
-      title: `Mark Task as ${
-        newStatus.charAt(0).toUpperCase() + newStatus.slice(1)
-      }`,
-      content: `Are you sure you want to mark this task as ${newStatus}?`,
-      okText: "Yes",
-      cancelText: "No",
-      onOk: async () => {
-        try {
-          setUpdatingTaskId(taskId);
-          await coachService.updateTaskStatus(taskId, newStatus);
-          message.success(`Task marked as ${newStatus}`);
-          fetchUserTasks();
-        } catch (error) {
-          console.error("Failed to update task status:", error);
-          message.error("Failed to update task status. Please try again.");
-        } finally {
-          setUpdatingTaskId(null);
-        }
-      },
-    });
-  };
-
-  const getTaskActions = (task) => {
-    if (task.status !== "pending") {
-      return [];
-    }
-
-    return [
-      {
-        key: "completed",
-        label: (
-          <Space>
-            <CheckCircleOutlined style={{ color: "#52c41a" }} />
-            Mark as Completed
-          </Space>
-        ),
-        onClick: () => handleUpdateTaskStatus(task.taskId, "completed"),
-      },
-      {
-        key: "failed",
-        label: (
-          <Space>
-            <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
-            Mark as Failed
-          </Space>
-        ),
-        onClick: () => handleUpdateTaskStatus(task.taskId, "failed"),
-      },
-    ];
   };
 
   const handleDeleteTask = (taskId) => {
@@ -1372,32 +1321,6 @@ export const MentorClientDetails = () => {
                             >
                               Edit
                             </Button>,
-                            task.status === "pending" ? (
-                              <Dropdown
-                                key="status"
-                                menu={{ items: getTaskActions(task) }}
-                                trigger={["click"]}
-                                placement="bottomRight"
-                              >
-                                <Button
-                                  type="text"
-                                  loading={updatingTaskId === task.taskId}
-                                >
-                                  Update Status
-                                </Button>
-                              </Dropdown>
-                            ) : (
-                              <Button
-                                key="completed"
-                                type="text"
-                                icon={<CheckCircleOutlined />}
-                                disabled
-                              >
-                                {task.status === "completed"
-                                  ? "Completed"
-                                  : "Failed"}
-                              </Button>
-                            ),
                             <Button
                               key="delete"
                               type="text"

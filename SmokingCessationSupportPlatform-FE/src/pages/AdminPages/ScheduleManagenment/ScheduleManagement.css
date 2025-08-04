@@ -13,7 +13,6 @@
   letter-spacing: 0.01em;
 }
 
-/* Header Styles - Removed as we use simple h2 now */
 
 /* Content Styles */
 .schedule-content {
@@ -240,6 +239,12 @@
 .slot-booked {
   background: #e6f7ff;
   border: 2px solid #91d5ff;
+}
+
+/* Past booked slots - no blue border */
+.slot-booked.past-slot {
+  background: none;
+  border: none;
 }
 
 .slot-completed {

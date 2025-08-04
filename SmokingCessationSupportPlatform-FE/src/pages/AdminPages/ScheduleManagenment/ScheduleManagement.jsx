@@ -30,70 +30,55 @@ import {
 } from "@ant-design/icons";
 import AdminLayout from "../../../components/layout/AdminLayout";
 import api from "../../../config/axios.js";
-
 import "./ScheduleManagement.css";
 
 const { Title, Text } = Typography;
 
-const timeSlots = [
+const TIME_SLOTS = [
   { id: 1, label: "Slot 1", time: "07:00 - 09:30", period: "Morning" },
   { id: 2, label: "Slot 2", time: "09:30 - 12:00", period: "Morning" },
   { id: 3, label: "Slot 3", time: "13:00 - 15:30", period: "Afternoon" },
   { id: 4, label: "Slot 4", time: "15:30 - 18:00", period: "Afternoon" },
 ];
 
-const generateWeekDays = (currentDate) => {
-  const startOfWeek = currentDate.startOf("week"); // Start from Sunday
-  const days = [];
+const SLOT_STATUS_CONFIG = {
+  available: {
+    color: "success",
+    text: "Available",
+    className: "slot-available",
+  },
+  booked: { color: "processing", text: "Booked", className: "slot-booked" },
+  cancelled: { color: "error", text: "Cancelled", className: "slot-cancelled" },
+  "not-booked": {
+    color: "warning",
+    text: "Not Booked",
+    className: "slot-not-booked",
+  },
+  "not-added": {
+    color: "default",
+    text: "Not Added",
+    className: "slot-not-added",
+  },
+  default: { color: "default", text: "Empty", className: "slot-empty" },
+};
 
+const generateWeekDays = (currentDate) => {
+  const startOfWeek = currentDate.startOf("week");
+  const days = [];
   for (let i = 0; i < 7; i++) {
     const date = startOfWeek.add(i, "day");
     days.push({
       day: date.format("ddd").toUpperCase(),
-      date: date.format("DD"),
       fullDate: date.format("MMM DD"),
       key: date.format("MM-DD"),
       fullDateObj: date,
     });
   }
-
   return days;
 };
 
-const getSlotStatusConfig = (status) => {
-  switch (status) {
-    case "available":
-      return {
-        color: "success",
-        text: "Available",
-        className: "slot-available",
-      };
-    case "booked":
-      return { color: "processing", text: "Booked", className: "slot-booked" };
-    case "completed":
-      return {
-        color: "default",
-        text: "Completed",
-        className: "slot-completed",
-      };
-    case "cancelled":
-      return { color: "error", text: "Cancelled", className: "slot-cancelled" };
-    case "not-booked":
-      return {
-        color: "warning",
-        text: "Not Booked",
-        className: "slot-not-booked",
-      };
-    case "not-added":
-      return {
-        color: "default",
-        text: "Not Added",
-        className: "slot-not-added",
-      };
-    default:
-      return { color: "default", text: "Empty", className: "slot-empty" };
-  }
-};
+const getSlotStatusConfig = (status) =>
+  SLOT_STATUS_CONFIG[status] || SLOT_STATUS_CONFIG.default;
 
 function ScheduleManagement() {
   const [selectedMentor, setSelectedMentor] = useState(null);
@@ -105,10 +90,8 @@ function ScheduleManagement() {
   const [mentorFeedbacks, setMentorFeedbacks] = useState([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
 
-  // Generate week days based on current date
+  // Memoized computed values
   const weekDays = useMemo(() => generateWeekDays(currentDate), [currentDate]);
-
-  // Format current week display
   const currentWeekDisplay = useMemo(() => {
     const startOfWeek = currentDate.startOf("week");
     const endOfWeek = currentDate.endOf("week");
@@ -117,7 +100,6 @@ function ScheduleManagement() {
     )}`;
   }, [currentDate]);
 
-  // Get current selected mentor from API data
   const currentMentor = useMemo(() => {
     if (!selectedMentor || allMentors.length === 0) {
       return {
@@ -130,7 +112,6 @@ function ScheduleManagement() {
         totalSlots: 0,
         availableSlots: 0,
         bookedSlots: 0,
-        completedSlots: 0,
       };
     }
 
@@ -139,26 +120,13 @@ function ScheduleManagement() {
     );
     if (!mentor) return allMentors[0];
 
-    // Calculate real statistics from slot data
     const totalSlots = realSlots.length;
     const availableSlots = realSlots.filter((slot) => !slot.booked).length;
     const bookedSlots = realSlots.filter((slot) => slot.booked).length;
-    const completedSlots = realSlots.filter((slot) => {
-      const slotDate = dayjs(slot.slotDate);
-      const today = dayjs();
-      return slot.booked && slotDate.isBefore(today, "day");
-    }).length;
 
-    return {
-      ...mentor,
-      totalSlots,
-      availableSlots,
-      bookedSlots,
-      completedSlots,
-    };
+    return { ...mentor, totalSlots, availableSlots, bookedSlots };
   }, [selectedMentor, allMentors, realSlots]);
 
-  // Get current mentor's slots with real API data
   const mentorSlots = useMemo(() => {
     if (!selectedMentor) return {};
 
@@ -172,9 +140,7 @@ function ScheduleManagement() {
 
       slots[dateKey] = {};
 
-      // Process each time slot (1-4)
       for (let slotNum = 1; slotNum <= 4; slotNum++) {
-        // Find real slot data for this date and slot number
         const realSlot = realSlots.find(
           (slot) =>
             slot.slotDate === fullDate &&
@@ -183,24 +149,13 @@ function ScheduleManagement() {
         );
 
         if (realSlot) {
-          // Real slot exists
-          if (isPastDate) {
-            // Past dates: booked=true -> "completed", booked=false -> "not-booked"
-            slots[dateKey][slotNum] = realSlot.booked
-              ? "completed"
-              : "not-booked";
-          } else {
-            // Current/future dates: booked=true -> "booked", booked=false -> "available"
-            slots[dateKey][slotNum] = realSlot.booked ? "booked" : "available";
-          }
+          slots[dateKey][slotNum] = realSlot.booked
+            ? "booked"
+            : isPastDate
+            ? "not-booked"
+            : "available";
         } else {
-          // No slot exists
-          if (isPastDate) {
-            slots[dateKey][slotNum] = "not-added";
-          } else {
-            // Current/future dates will show "Add Slot" button (empty status)
-            slots[dateKey][slotNum] = null;
-          }
+          slots[dateKey][slotNum] = isPastDate ? "not-added" : null;
         }
       }
     });
@@ -208,9 +163,8 @@ function ScheduleManagement() {
     return slots;
   }, [selectedMentor, realSlots, weekDays]);
 
-  // Update slots when week changes or mentor changes
   useEffect(() => {
-    const fetchMentorSlots = async () => {
+    const fetchSlots = async () => {
       if (!selectedMentor) {
         setRealSlots([]);
         return;
@@ -230,43 +184,15 @@ function ScheduleManagement() {
         setLoading(false);
       }
     };
+    fetchSlots();
+  }, [selectedMentor, currentDate]);
 
-    fetchMentorSlots();
-  }, [selectedMentor, currentDate]); // Also refresh when currentDate changes
-
-  // Navigation handlers
-  const handlePreviousWeek = () => {
-    setLoading(true);
-    setCurrentDate((prev) => prev.subtract(1, "week"));
-    // Loading will be set to false when slots are regenerated
-    setTimeout(() => setLoading(false), 300);
-  };
-
-  const handleNextWeek = () => {
-    setLoading(true);
-    setCurrentDate((prev) => prev.add(1, "week"));
-    // Loading will be set to false when slots are regenerated
-    setTimeout(() => setLoading(false), 300);
-  };
-
-  const handleToday = () => {
-    setLoading(true);
-    setCurrentDate(dayjs());
-    // Loading will be set to false when slots are regenerated
-    setTimeout(() => setLoading(false), 300);
-  };
-
-  // Fetch mentor list from API
   useEffect(() => {
     const fetchMentors = async () => {
       try {
         const res = await api.get("/admin/mentors");
         const mentors = res.data || [];
-
-        // Store all mentors for UI display
         setAllMentors(mentors);
-
-        // Auto-select first mentor as default
         if (mentors.length > 0) {
           setSelectedMentor(mentors[0].userId.toString());
         }
@@ -278,38 +204,49 @@ function ScheduleManagement() {
     fetchMentors();
   }, []);
 
+  // Navigation handlers
+  const handlePreviousWeek = () => {
+    setLoading(true);
+    setCurrentDate((prev) => prev.subtract(1, "week"));
+    setTimeout(() => setLoading(false), 300);
+  };
+
+  const handleNextWeek = () => {
+    setLoading(true);
+    setCurrentDate((prev) => prev.add(1, "week"));
+    setTimeout(() => setLoading(false), 300);
+  };
+
+  const handleToday = () => {
+    setLoading(true);
+    setCurrentDate(dayjs());
+    setTimeout(() => setLoading(false), 300);
+  };
+
+  // Slot action handlers
   const handleSlotAction = (action, dayKey, slotId) => {
     if (action === "add") {
-      // Get the selected mentor's email
       const mentorEmail = allMentors.find(
         (m) => m.userId.toString() === selectedMentor
       )?.email;
+      const selectedDay = weekDays.find((day) => day.key === dayKey);
 
       if (!mentorEmail) {
         message.error("Please select a mentor first");
         return;
       }
-
-      // Get the date for this day
-      const selectedDay = weekDays.find((day) => day.key === dayKey);
       if (!selectedDay) {
         message.error("Invalid date selected");
         return;
       }
 
-      const slotDate = selectedDay.fullDateObj.format("YYYY-MM-DD");
-
-      // Create a single slot using the existing batch create logic
       const slotData = {
         mentorEmail,
         slotNumber: slotId,
-        slotDate,
+        slotDate: selectedDay.fullDateObj.format("YYYY-MM-DD"),
       };
-
-      // Call the batch create function with single slot
       handleBatchCreateSlots([slotData]);
     } else if (action === "delete") {
-      // Find the slot to delete
       const selectedDay = weekDays.find((day) => day.key === dayKey);
       if (!selectedDay) {
         message.error("Invalid date selected");
@@ -328,32 +265,22 @@ function ScheduleManagement() {
         message.error("Slot not found");
         return;
       }
-
-      // Call delete function
       handleDeleteSlot(slotToDelete.slotId);
-    } else {
-      console.log(`${action} slot ${slotId} on ${dayKey}`);
     }
   };
 
-  // Handler for deleting a slot
   const handleDeleteSlot = async (slotId) => {
     try {
       setLoading(true);
       await api.delete(`/admin/consultation-slots/${slotId}`);
-
       message.success("Slot deleted successfully");
 
-      // Refresh slots for the selected mentor
+      // Refresh slots
       if (selectedMentor) {
-        try {
-          const response = await api.get(
-            `/admin/mentor/${selectedMentor}/slots/all`
-          );
-          setRealSlots(response.data || []);
-        } catch (error) {
-          console.error("Error refreshing slots:", error);
-        }
+        const response = await api.get(
+          `/admin/mentor/${selectedMentor}/slots/all`
+        );
+        setRealSlots(response.data || []);
       }
     } catch (error) {
       console.error("Error deleting slot:", error);
@@ -363,7 +290,7 @@ function ScheduleManagement() {
     }
   };
 
-  // Handler for viewing mentor feedback
+  // Modal handlers
   const handleViewFeedback = async () => {
     if (!selectedMentor) {
       message.error("Please select a mentor first");
@@ -386,86 +313,53 @@ function ScheduleManagement() {
     }
   };
 
-  // Close feedback modal
   const handleCloseFeedbackModal = () => {
     setFeedbackModal(false);
     setMentorFeedbacks([]);
   };
 
-  // Handle mentor filter change
-  const handleMentorChange = (value) => {
-    setSelectedMentor(value);
-  };
+  const handleMentorChange = (value) => setSelectedMentor(value);
 
-  // Helper function to get slot time based on slot number
-  const _getSlotTime = (slotNumber) => {
-    const timeSlots = {
-      1: "7:00 AM - 9:30 AM",
-      2: "9:30 AM - 12:00 PM",
-      3: "13:00 PM - 15:30 PM",
-      4: "15:30 PM - 18:00 PM",
-    };
-    return timeSlots[slotNumber] || "";
-  };
-
-  // Handler for batch slot creation - NOW WITH REAL API CALLS
+  // Batch slot creation handler
   const handleBatchCreateSlots = async (slots) => {
     try {
       setLoading(true);
-
-      // Process slots sequentially to stop on first error
       const createdSlots = [];
       let hasError = false;
       let errorMessage = "";
 
-      for (let i = 0; i < slots.length; i++) {
-        const slotData = slots[i];
-
+      for (const slotData of slots) {
         try {
           const response = await api.post(
             `admin/consultation-slots?mentorEmail=${encodeURIComponent(
               slotData.mentorEmail
             )}&slotNumber=${slotData.slotNumber}&slotDate=${slotData.slotDate}`
           );
-
-          // If successful, add to created slots
-          createdSlots.push({
-            data: response.data,
-            slotData: slotData,
-          });
+          createdSlots.push({ data: response.data, slotData });
         } catch (error) {
-          if (error.response && error.response.status === 500) {
-            hasError = true;
-            errorMessage = "Slot already exists for this coach";
-            break; // Stop processing remaining slots
-          } else {
-            hasError = true;
-            errorMessage = `Failed to create slot: ${error.message}`;
-            break; // Stop processing remaining slots
-          }
+          hasError = true;
+          errorMessage =
+            error.response?.status === 500
+              ? "Slot already exists for this coach"
+              : `Failed to create slot: ${error.message}`;
+          break;
         }
       }
 
-      // If there's an error, show error message and don't create any slots
       if (hasError) {
         message.error(errorMessage);
-        return; // Exit early, don't close modal
+        return;
       }
 
-      // If all slots created successfully
       if (createdSlots.length > 0) {
         message.success(`Successfully created ${createdSlots.length} slot(s)`);
 
-        // Refresh slots for the selected mentor
+        // Refresh slots
         if (selectedMentor) {
-          try {
-            const response = await api.get(
-              `/admin/mentor/${selectedMentor}/slots/all`
-            );
-            setRealSlots(response.data || []);
-          } catch (error) {
-            console.error("Error refreshing slots:", error);
-          }
+          const response = await api.get(
+            `/admin/mentor/${selectedMentor}/slots/all`
+          );
+          setRealSlots(response.data || []);
         }
       }
     } catch (error) {
@@ -477,11 +371,6 @@ function ScheduleManagement() {
   };
 
   const getSlotActionItems = (day, slotId) => [
-    // {
-    //   key: "edit",
-    //   label: "Edit Slot",
-    //   onClick: () => handleSlotAction("edit", day, slotId),
-    // },
     {
       key: "delete",
       label: "Delete Slot",
@@ -490,80 +379,88 @@ function ScheduleManagement() {
     },
   ];
 
-  // Create table columns for the schedule
-  const columns = [
-    {
-      title: "Time Slots",
-      dataIndex: "timeSlot",
-      key: "timeSlot",
-      width: 200,
-      className: "time-slot-column",
-      render: (_, record) => (
-        <div className="time-slot-info">
-          <div className="slot-label">{record.label}</div>
-          <div className="slot-time">{record.time}</div>
-          <div className="slot-period">{record.period}</div>
+  // Table configuration
+  const timeSlotColumn = {
+    title: "Time Slots",
+    dataIndex: "timeSlot",
+    key: "timeSlot",
+    width: 200,
+    className: "time-slot-column",
+    render: (_, record) => (
+      <div className="time-slot-info">
+        <div className="slot-label">{record.label}</div>
+        <div className="slot-time">{record.time}</div>
+        <div className="slot-period">{record.period}</div>
+      </div>
+    ),
+  };
+
+  const dayColumns = weekDays.map((day) => ({
+    title: (
+      <div className="day-header">
+        <div className="day-name">{day.day}</div>
+        <div className="day-date">{day.fullDate}</div>
+      </div>
+    ),
+    dataIndex: day.key,
+    key: day.key,
+    width: 140,
+    className: "day-column",
+    render: (_, record) => {
+      const slotStatus = mentorSlots[day.key]?.[record.id];
+      const isEmpty = slotStatus === null;
+      const statusConfig = getSlotStatusConfig(slotStatus);
+
+      const today = dayjs().format("YYYY-MM-DD");
+      const slotDate = day.fullDateObj.format("YYYY-MM-DD");
+      const isPastDate = dayjs(slotDate).isBefore(today);
+
+      const additionalClass =
+        slotStatus === "booked" && isPastDate ? "past-slot" : "";
+      const fullClassName =
+        `slot-status ${statusConfig.className} ${additionalClass}`.trim();
+
+      return (
+        <div className="slot-cell">
+          {isEmpty ? (
+            <Button
+              type="dashed"
+              block
+              icon={<PlusOutlined />}
+              className="add-slot-btn"
+              onClick={() => handleSlotAction("add", day.key, record.id)}
+            >
+              Add Slot
+            </Button>
+          ) : (
+            <div className={fullClassName}>
+              <Tag color={statusConfig.color} className="slot-tag">
+                {statusConfig.text}
+              </Tag>
+              {["available", "booked", "not-booked"].includes(slotStatus) && (
+                <Dropdown
+                  menu={{ items: getSlotActionItems(day.key, record.id) }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<MoreOutlined />}
+                    className="slot-action"
+                  />
+                </Dropdown>
+              )}
+            </div>
+          )}
         </div>
-      ),
+      );
     },
-    ...weekDays.map((day) => ({
-      title: (
-        <div className="day-header">
-          <div className="day-name">{day.day}</div>
-          <div className="day-date">{day.fullDate}</div>
-        </div>
-      ),
-      dataIndex: day.key,
-      key: day.key,
-      width: 140,
-      className: "day-column",
-      render: (_, record) => {
-        const slotStatus = mentorSlots[day.key]?.[record.id];
-        const isEmpty = slotStatus === null;
-        const statusConfig = getSlotStatusConfig(slotStatus);
+  }));
 
-        return (
-          <div className="slot-cell">
-            {isEmpty ? (
-              <Button
-                type="dashed"
-                block
-                icon={<PlusOutlined />}
-                className="add-slot-btn"
-                onClick={() => handleSlotAction("add", day.key, record.id)}
-              >
-                Add Slot
-              </Button>
-            ) : (
-              <div className={`slot-status ${statusConfig.className}`}>
-                <Tag color={statusConfig.color} className="slot-tag">
-                  {statusConfig.text}
-                </Tag>
-                {(slotStatus === "available" ||
-                  slotStatus === "booked" ||
-                  slotStatus === "not-booked") && (
-                  <Dropdown
-                    menu={{ items: getSlotActionItems(day.key, record.id) }}
-                    trigger={["click"]}
-                    placement="bottomRight"
-                  >
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<MoreOutlined />}
-                      className="slot-action"
-                    />
-                  </Dropdown>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      },
-    })),
-  ];
+  const columns = [timeSlotColumn, ...dayColumns];
 
-  const tableData = timeSlots.map((slot) => ({
+  const tableData = TIME_SLOTS.map((slot) => ({
     key: slot.id,
     id: slot.id,
     label: slot.label,
@@ -765,13 +662,6 @@ function ScheduleManagement() {
                         valueStyle={{ color: "#1890ff" }}
                       />
                     </Col>
-                    <Col>
-                      <Statistic
-                        title="Completed"
-                        value={currentMentor.completedSlots}
-                        valueStyle={{ color: "#8c8c8c" }}
-                      />
-                    </Col>
                   </Row>
                   {selectedMentor && (
                     <Button
@@ -872,9 +762,7 @@ function ScheduleManagement() {
                       Consultation #{feedback.consultationId}
                     </Tag>
                     <Tag
-                      color={
-                        feedback.status === "completed" ? "green" : "orange"
-                      }
+                      color={feedback.status === "booked" ? "green" : "orange"}
                     >
                       {feedback.status.charAt(0).toUpperCase() +
                         feedback.status.slice(1)}
