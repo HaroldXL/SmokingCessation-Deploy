@@ -19,6 +19,11 @@ import {
   Alert,
   Rate,
   Progress,
+  Form,
+  DatePicker,
+  InputNumber,
+  message,
+  Dropdown,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -30,53 +35,112 @@ import {
   CalendarOutlined,
   StarOutlined,
   TrophyOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  PlusOutlined,
+  BellOutlined,
+  DeleteOutlined,
+  MoreOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { coachService } from "../../../services/coachService";
 import styles from "./ClientDetails.module.css";
+import dayjs from "dayjs";
+import { useSelector } from "react-redux";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
+const TIME_RANGES = {
+  1: "7:00 AM - 9:30 AM",
+  2: "9:30 AM - 12:00 PM",
+  3: "13:00 PM - 15:30 PM",
+  4: "15:30 PM - 18:00 PM",
+};
+
+const STATUS_COLOR_MAP = {
+  active: "#52c41a",
+  "at-risk": "#ff4d4f",
+  completed: "#1890ff",
+  inactive: "#d9d9d9",
+};
+
+const slotNumberToTime = (slotNumber) =>
+  TIME_RANGES[slotNumber] || "Time not available";
+
+const mapConsultationStatusToClientStatus = (status) => {
+  const statusMap = {
+    completed: "completed",
+    scheduled: "active",
+    cancelled: "inactive",
+  };
+  return statusMap[status] || "active";
+};
+
+const getAddictionColor = (dependencyLevel) => {
+  switch (dependencyLevel?.toLowerCase()) {
+    case "very_low":
+      return "#52c41a";
+    case "low":
+      return "#52c41a";
+    case "medium":
+      return "#faad14";
+    case "high":
+      return "#ff4d4f";
+    case "very_high":
+      return "#ff4d4f";
+    default:
+      return "#d9d9d9";
+  }
+};
+
+const getCravingColor = (intensity) => {
+  if (intensity <= 3) return "#52c41a";
+  if (intensity <= 6) return "#faad14";
+  return "#ff4d4f";
+};
+
+const getStatusColor = (status) => {
+  return STATUS_COLOR_MAP[status] || "#1890ff";
+};
+
+const DATE_FORMAT = "YYYY-MM-DD";
+
 export const MentorClientDetails = () => {
+  const user = useSelector((state) => state.user);
   const navigate = useNavigate();
   const { clientId } = useParams();
+
   const [activeTab, setActiveTab] = useState("overview");
-  const [notesModalVisible, setNotesModalVisible] = useState(false);
-  const [selectedConsultation, setSelectedConsultation] = useState(null);
-  const [coachNotes, setCoachNotes] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [clientData, setClientData] = useState(null);
   const [smokingProgress, setSmokingProgress] = useState(null);
   const [userReasons, setUserReasons] = useState([]);
   const [userTriggers, setUserTriggers] = useState([]);
-  const [userStrategies, setUserStrategies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [userQuestions, setUserQuestions] = useState([]);
+  const [userBadges, setUserBadges] = useState([]);
+  const [addictionScore, setAddictionScore] = useState(null);
+
+  const [notesModalVisible, setNotesModalVisible] = useState(false);
+  const [selectedConsultation, setSelectedConsultation] = useState(null);
+  const [coachNotes, setCoachNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [latestConsultationId, setLatestConsultationId] = useState(null);
-  const [userBadges, setUserBadges] = useState([]);
 
-  const slotNumberToTime = (slotNumber) => {
-    const timeRanges = {
-      1: "7:00 AM - 9:30 AM",
-      2: "9:30 AM - 12:00 PM",
-      3: "13:00 PM - 15:30 PM",
-      4: "15:30 PM - 18:00 PM",
-    };
-    return timeRanges[slotNumber] || "Time not available";
-  };
+  const [userTasks, setUserTasks] = useState([]);
+  const [taskModalVisible, setTaskModalVisible] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [taskForm] = Form.useForm();
+  const [loadingTasks, setLoadingTasks] = useState(false);
 
-  const mapConsultationStatusToClientStatus = (consultationStatus) => {
-    switch (consultationStatus) {
-      case "completed":
-        return "completed";
-      case "scheduled":
-        return "active";
-      case "cancelled":
-        return "inactive";
-      default:
-        return "active";
-    }
-  };
+  // Notification states
+  const [notificationModalVisible, setNotificationModalVisible] =
+    useState(false);
+  const [notificationForm] = Form.useForm();
+  const [sendingNotification, setSendingNotification] = useState(false);
+  const [updatingTaskId, setUpdatingTaskId] = useState(null);
 
   useEffect(() => {
     const buildClientData = (consultations, progressData) => {
@@ -84,15 +148,12 @@ export const MentorClientDetails = () => {
         (consultation) => consultation.user.userId.toString() === clientId
       );
 
-      if (clientConsultations.length === 0) {
-        return null; // Client không tồn tại
-      }
+      if (clientConsultations.length === 0) return null;
 
-      // Lấy thông tin client từ consultation đầu tiên
       const firstConsultation = clientConsultations[0];
       const user = firstConsultation.user;
+      const progress = progressData || {};
 
-      // Xây dựng consultation history
       const consultationHistory = clientConsultations.map((consultation) => ({
         id: consultation.consultationId,
         type: "Video Consultation",
@@ -103,18 +164,11 @@ export const MentorClientDetails = () => {
           consultation.notes || "No notes available for this consultation.",
         rating: consultation.rating,
         feedback: consultation.feedback,
-      })); // Xác định trạng thái client
-      const latestStatus = clientConsultations.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      )[0]?.status;
+      }));
 
-      // Lấy consultation mới nhất để lưu notes
       const latestConsultation = clientConsultations.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       )[0];
-
-      // Sử dụng dữ liệu từ smoking progress nếu có
-      const progress = progressData || {};
 
       return {
         id: user.userId,
@@ -124,22 +178,20 @@ export const MentorClientDetails = () => {
         profileName: user.profileName || null,
         gender: user.gender || null,
         birthDate: user.birthDate || null,
-        status: mapConsultationStatusToClientStatus(latestStatus),
+        status: mapConsultationStatusToClientStatus(latestConsultation?.status),
         joinDate: firstConsultation.createdAt,
         currentProgress: {
           daysSmokeFreee: progress.daysSinceStart || 0,
-          cravingLevel: progress.averageCravingLevel || 5,
-          nextSession: null, // Có thể tính toán từ scheduled consultations
+          addictionScore: null, // Will be set separately from addiction API
+          nextSession: null,
         },
         detailedInfo: {
           totalSavings: progress.moneySaved || 0,
           consultationsAttended: clientConsultations.filter(
             (c) => c.status === "completed"
           ).length,
-          motivations: ["Improve health", "Save money", "Family"], // Default values
-          goals: ["30 days smoke-free", "Reduce daily cigarettes"], // Default values
-          notes: latestConsultation?.notes || "", // Lấy notes từ consultation mới nhất
-          consultationHistory: consultationHistory,
+          notes: latestConsultation?.notes || "",
+          consultationHistory,
           cigarettesPerDay: progress.cigarettesPerDay || 0,
           cigarettesAvoided: progress.cigarettesAvoided || 0,
           smokingHistoryByDate: progress.smokingHistoryByDate || {},
@@ -152,34 +204,42 @@ export const MentorClientDetails = () => {
       setLoading(true);
       setError(null);
       try {
-        const [consultations, progressData, reasons, triggers, strategies] =
-          await Promise.all([
-            coachService.getMentorConsultations(),
-            coachService.getUserSmokingProgress(clientId).catch(() => null), // Không bắt buộc có progress data
-            coachService.getUserReasons(clientId).catch(() => []), // Lấy reasons của user
-            coachService.getUserTriggers(clientId).catch(() => []), // Lấy triggers của user
-            coachService.getUserStrategies(clientId).catch(() => []), // Lấy strategies của user
-          ]);
+        const [
+          consultations,
+          progressData,
+          reasons,
+          triggers,
+          questions,
+          badges,
+          scoreData,
+        ] = await Promise.all([
+          coachService.getMentorConsultations(),
+          coachService.getUserSmokingProgress(clientId).catch(() => null),
+          coachService.getUserReasons(clientId).catch(() => []),
+          coachService.getUserTriggers(clientId).catch(() => []),
+          coachService.getUserQuestions(clientId).catch(() => []),
+          coachService.getUserBadges(clientId).catch(() => []),
+          coachService.getUserAddictionScore(clientId).catch(() => null),
+        ]);
 
-        // Lấy badges riêng biệt
-        const badges = await coachService
-          .getUserBadges(clientId)
-          .catch(() => []);
-
-        // Xây dựng dữ liệu client
         const clientInfo = buildClientData(consultations, progressData?.[0]);
-
         if (!clientInfo) {
           setError("Client not found");
           return;
         }
 
+        // Update client data with addiction score
+        if (scoreData) {
+          clientInfo.currentProgress.addictionScore = scoreData;
+        }
+
         setClientData(clientInfo);
-        setSmokingProgress(progressData?.[0]); // Take the first progress record
+        setSmokingProgress(progressData?.[0]);
         setUserReasons(reasons || []);
         setUserTriggers(triggers || []);
-        setUserStrategies(strategies || []);
+        setUserQuestions(questions || []);
         setUserBadges(badges || []);
+        setAddictionScore(scoreData);
         setLatestConsultationId(clientInfo.latestConsultationId);
 
         if (clientInfo?.detailedInfo?.notes) {
@@ -198,23 +258,40 @@ export const MentorClientDetails = () => {
     }
   }, [clientId]);
 
+  useEffect(() => {
+    if (clientId) {
+      const fetchTasks = async () => {
+        setLoadingTasks(true);
+        try {
+          const tasks = await coachService.getMentorUserTasks(clientId);
+          setUserTasks(tasks || []);
+        } catch (error) {
+          console.error("Failed to fetch user tasks:", error);
+        } finally {
+          setLoadingTasks(false);
+        }
+      };
+      fetchTasks();
+    }
+  }, [clientId]);
+
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "100px 0" }}>
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
-        <div style={{ marginTop: 16 }}>Loading client details...</div>
+        <div className={styles.loadingText}>Loading client details...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ textAlign: "center", padding: "100px 0" }}>
+      <div className={styles.errorContainer}>
         <Alert message="Error" description={error} type="error" showIcon />
         <Button
           type="primary"
           onClick={() => navigate("/mentor/clients")}
-          style={{ marginTop: 16 }}
+          className={styles.errorBackButton}
         >
           Back to Clients List
         </Button>
@@ -224,7 +301,7 @@ export const MentorClientDetails = () => {
 
   if (!clientData) {
     return (
-      <div style={{ padding: 24, textAlign: "center" }}>
+      <div className={styles.notFoundContainer}>
         <Title level={2}>Client Not Found</Title>
         <Paragraph>
           The client with ID "{clientId}" could not be found.
@@ -236,34 +313,11 @@ export const MentorClientDetails = () => {
     );
   }
 
-  const handleBackToList = () => {
-    navigate("/mentor/clients");
-  };
+  const handleBackToList = () => navigate("/mentor/clients");
 
   const handleViewConsultationNotes = (consultation) => {
     setSelectedConsultation(consultation);
     setNotesModalVisible(true);
-  };
-
-  const getCravingColor = (intensity) => {
-    if (intensity <= 3) return "#52c41a";
-    if (intensity <= 6) return "#faad14";
-    return "#ff4d4f";
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "#52c41a";
-      case "at-risk":
-        return "#ff4d4f";
-      case "completed":
-        return "#1890ff";
-      case "inactive":
-        return "#d9d9d9";
-      default:
-        return "#1890ff";
-    }
   };
 
   const saveCoachNotes = async () => {
@@ -279,16 +333,10 @@ export const MentorClientDetails = () => {
     setSavingNotes(true);
     try {
       await coachService.addConsultationNote(latestConsultationId, coachNotes);
-
-      // Cập nhật local state
       setClientData((prev) => ({
         ...prev,
-        detailedInfo: {
-          ...prev.detailedInfo,
-          notes: coachNotes,
-        },
+        detailedInfo: { ...prev.detailedInfo, notes: coachNotes },
       }));
-
       Modal.success({
         title: "Notes Saved",
         content: "Your notes have been saved successfully.",
@@ -301,6 +349,167 @@ export const MentorClientDetails = () => {
       });
     } finally {
       setSavingNotes(false);
+    }
+  };
+
+  const fetchUserTasks = async () => {
+    setLoadingTasks(true);
+    try {
+      const tasks = await coachService.getMentorUserTasks(clientId);
+      setUserTasks(tasks || []);
+    } catch (error) {
+      console.error("Failed to fetch user tasks:", error);
+      message.error("Failed to load tasks. Please try again.");
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
+
+  const handleCreateTask = () => {
+    setEditingTask(null);
+    taskForm.resetFields();
+    setTaskModalVisible(true);
+  };
+
+  const handleEditTask = (task) => {
+    if (!task) return;
+
+    setEditingTask(task);
+    taskForm.setFieldsValue({
+      taskDay: task.taskDay ? dayjs(task.taskDay) : null,
+      customSupportMeasures: task.customSupportMeasures,
+      targetCigarettes: task.targetCigarettes,
+    });
+    setTaskModalVisible(true);
+  };
+
+  const handleSaveTask = async (values) => {
+    try {
+      const taskData = {
+        taskDay: values.taskDay ? values.taskDay.format(DATE_FORMAT) : "",
+        customSupportMeasures: values.customSupportMeasures,
+        targetCigarettes: values.targetCigarettes,
+      };
+
+      if (editingTask) {
+        await coachService.updateTask(editingTask.taskId, taskData);
+        message.success("Task updated successfully!");
+      } else {
+        await coachService.assignTaskToUser({
+          userId: parseInt(clientId),
+          ...taskData,
+        });
+        message.success("Task created successfully!");
+      }
+
+      setTaskModalVisible(false);
+      fetchUserTasks();
+    } catch (error) {
+      console.error("Failed to save task:", error);
+      message.error("Failed to save task. Please try again.");
+    }
+  };
+
+  const handleUpdateTaskStatus = (taskId, newStatus) => {
+    Modal.confirm({
+      title: `Mark Task as ${
+        newStatus.charAt(0).toUpperCase() + newStatus.slice(1)
+      }`,
+      content: `Are you sure you want to mark this task as ${newStatus}?`,
+      okText: "Yes",
+      cancelText: "No",
+      onOk: async () => {
+        try {
+          setUpdatingTaskId(taskId);
+          await coachService.updateTaskStatus(taskId, newStatus);
+          message.success(`Task marked as ${newStatus}`);
+          fetchUserTasks();
+        } catch (error) {
+          console.error("Failed to update task status:", error);
+          message.error("Failed to update task status. Please try again.");
+        } finally {
+          setUpdatingTaskId(null);
+        }
+      },
+    });
+  };
+
+  const getTaskActions = (task) => {
+    if (task.status !== "pending") {
+      return [];
+    }
+
+    return [
+      {
+        key: "completed",
+        label: (
+          <Space>
+            <CheckCircleOutlined style={{ color: "#52c41a" }} />
+            Mark as Completed
+          </Space>
+        ),
+        onClick: () => handleUpdateTaskStatus(task.taskId, "completed"),
+      },
+      {
+        key: "failed",
+        label: (
+          <Space>
+            <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+            Mark as Failed
+          </Space>
+        ),
+        onClick: () => handleUpdateTaskStatus(task.taskId, "failed"),
+      },
+    ];
+  };
+
+  const handleDeleteTask = (taskId) => {
+    Modal.confirm({
+      title: "Delete Task",
+      content:
+        "Are you sure you want to delete this task? This action cannot be undone.",
+      okText: "Yes, Delete",
+      okType: "danger",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await coachService.deleteTask(taskId);
+          message.success("Task deleted successfully!");
+          fetchUserTasks();
+        } catch (error) {
+          console.error("Failed to delete task:", error);
+          message.error("Failed to delete task. Please try again.");
+        }
+      },
+    });
+  };
+
+  // Notification functions
+  const handleOpenNotificationModal = () => {
+    setNotificationModalVisible(true);
+    notificationForm.resetFields();
+  };
+
+  const handleSendNotification = async (values) => {
+    setSendingNotification(true);
+    try {
+      // Get current mentor ID from localStorage or auth context
+      const notificationData = {
+        mentorId: parseInt(user.userId),
+        userId: parseInt(clientId),
+        title: values.title,
+        message: values.message,
+      };
+
+      await coachService.sendNotificationToUser(notificationData);
+      message.success("Notification sent successfully!");
+      setNotificationModalVisible(false);
+      notificationForm.resetFields();
+    } catch (error) {
+      console.error("Failed to send notification:", error);
+      message.error("Failed to send notification. Please try again.");
+    } finally {
+      setSendingNotification(false);
     }
   };
 
@@ -333,15 +542,11 @@ export const MentorClientDetails = () => {
       <Card className={styles.clientHeaderCard} style={{ marginBottom: 24 }}>
         <Row gutter={32} align="middle">
           <Col span={3}>
-            <div style={{ textAlign: "center" }}>
+            <div className={styles.clientAvatarContainer}>
               <Avatar
                 size={120}
                 src={clientData.avatar}
-                className={styles.clientAvatar}
-                style={{
-                  border: "4px solid #f0f0f0",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
+                className={`${styles.clientAvatar} ${styles.clientAvatarImage}`}
               >
                 {clientData.name
                   .split(" ")
@@ -351,95 +556,40 @@ export const MentorClientDetails = () => {
             </div>
           </Col>
           <Col span={21}>
-            <div style={{ paddingLeft: 16 }}>
-              <div style={{ marginBottom: 16 }}>
+            <div className={styles.clientInfoContainer}>
+              <div className={styles.clientInfoSection}>
                 <Title
                   level={1}
-                  className={styles.clientName}
-                  style={{
-                    marginBottom: 0,
-                    fontSize: 32,
-                    fontWeight: 600,
-                    color: "#1f1f1f",
-                  }}
+                  className={`${styles.clientName} ${styles.clientMainTitle}`}
                 >
                   {clientData.name}
                 </Title>
                 {clientData.profileName && (
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      color: "#8c8c8c",
-                      fontStyle: "italic",
-                      marginTop: 4,
-                      display: "block",
-                    }}
-                  >
+                  <Text className={styles.clientProfileName}>
                     @{clientData.profileName}
                   </Text>
                 )}
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <Text
-                  type="secondary"
-                  style={{
-                    fontSize: 16,
-                    color: "#666",
-                  }}
-                >
+              <div className={styles.clientInfoSection}>
+                <Text type="secondary" className={styles.clientEmailText}>
                   {clientData.email}
                 </Text>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "16px",
-                  alignItems: "center",
-                }}
-              >
+              <div className={styles.clientMetaContainer}>
                 <Tag
                   color={getStatusColor(clientData.status)}
-                  style={{
-                    fontSize: 13,
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    fontWeight: 500,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
+                  className={styles.clientStatusTag}
                 >
                   {clientData.status}
                 </Tag>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "24px",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                  }}
-                >
+                <div className={styles.clientDetailsRow}>
                   {clientData.gender && (
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          color: "#8c8c8c",
-                          marginRight: 6,
-                        }}
-                      >
-                        Gender:
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 500,
-                          color: "#595959",
-                        }}
-                      >
+                    <div className={styles.clientDetailItem}>
+                      <Text className={styles.clientDetailLabel}>Gender:</Text>
+                      <Text className={styles.clientDetailValue}>
                         {clientData.gender.charAt(0).toUpperCase() +
                           clientData.gender.slice(1)}
                       </Text>
@@ -447,23 +597,9 @@ export const MentorClientDetails = () => {
                   )}
 
                   {clientData.birthDate && (
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          color: "#8c8c8c",
-                          marginRight: 6,
-                        }}
-                      >
-                        Birth:
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 500,
-                          color: "#595959",
-                        }}
-                      >
+                    <div className={styles.clientDetailItem}>
+                      <Text className={styles.clientDetailLabel}>Birth:</Text>
+                      <Text className={styles.clientDetailValue}>
                         {new Date(clientData.birthDate).toLocaleDateString(
                           "en-GB"
                         )}
@@ -471,23 +607,9 @@ export const MentorClientDetails = () => {
                     </div>
                   )}
 
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        color: "#8c8c8c",
-                        marginRight: 6,
-                      }}
-                    >
-                      Joined:
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: "#595959",
-                      }}
-                    >
+                  <div className={styles.clientDetailItem}>
+                    <Text className={styles.clientDetailLabel}>Joined:</Text>
+                    <Text className={styles.clientDetailValue}>
                       {new Date(clientData.joinDate).toLocaleDateString(
                         "en-GB"
                       )}
@@ -507,9 +629,8 @@ export const MentorClientDetails = () => {
             <Row gutter={24}>
               <Col span={12}>
                 <Card
-                  className={styles.statCard}
+                  className={`${styles.statCard} ${styles.overviewStatCard}`}
                   hoverable={false}
-                  style={{ backgroundColor: "#F5F8FA" }}
                 >
                   <Statistic
                     title="Total Consultations"
@@ -525,12 +646,7 @@ export const MentorClientDetails = () => {
                     type="link"
                     size="small"
                     onClick={() => setActiveTab("history")}
-                    style={{
-                      marginTop: 8,
-                      padding: 0,
-                      height: "auto",
-                      color: "#722ed1",
-                    }}
+                    className={styles.consultationHistoryLink}
                   >
                     View Consultation History →
                   </Button>
@@ -539,9 +655,8 @@ export const MentorClientDetails = () => {
 
               <Col span={12}>
                 <Card
-                  className={styles.statCard}
+                  className={`${styles.statCard} ${styles.overviewStatCard}`}
                   hoverable={false}
-                  style={{ backgroundColor: "#F5F8FA" }}
                 >
                   <Statistic
                     title="Total Achievements"
@@ -551,11 +666,7 @@ export const MentorClientDetails = () => {
                   />
                   <Text
                     type="secondary"
-                    style={{
-                      display: "block",
-                      marginTop: 8,
-                      fontSize: 12,
-                    }}
+                    className={styles.badgeStatDescription}
                   >
                     Badges earned during journey
                   </Text>
@@ -567,133 +678,58 @@ export const MentorClientDetails = () => {
             <Row style={{ marginTop: 24 }}>
               <Col span={24}>
                 <Card
-                  className={styles.statCard}
-                  style={{ minHeight: 250, backgroundColor: "#F5F8FA" }}
+                  className={`${styles.statCard} ${styles.achievementsCard}`}
                   hoverable={false}
                 >
-                  <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <TrophyOutlined
-                      style={{
-                        fontSize: 32,
-                        color: "#faad14",
-                        marginBottom: 12,
-                      }}
-                    />
-                    <Title level={3} style={{ margin: 0, color: "#faad14" }}>
+                  <div className={styles.achievementsHeader}>
+                    <TrophyOutlined className={styles.achievementsIcon} />
+                    <Title level={3} className={styles.achievementsTitle}>
                       Achievements & Badges
                     </Title>
                     <Text
                       type="secondary"
-                      style={{ fontSize: 14, display: "block", marginTop: 8 }}
+                      className={styles.achievementsSubtitle}
                     >
                       Client's earned achievements and milestones
                     </Text>
                   </div>
 
-                  <div
-                    style={{
-                      maxHeight: 320,
-                      overflowY: "auto",
-                      overflowX: "auto",
-                      padding: "0 16px",
-                    }}
-                  >
+                  <div className={styles.achievementsContainer}>
                     {userBadges.length > 0 ? (
                       <div
-                        style={{
-                          display: "flex",
-                          gap: 20,
-                          paddingBottom: 16,
-                          justifyContent:
-                            userBadges.length <= 4 ? "center" : "flex-start",
-                          minWidth: "100%",
-                        }}
+                        className={`${styles.achievementsRow} ${
+                          userBadges.length <= 4
+                            ? styles.achievementsRowCentered
+                            : styles.achievementsRowStart
+                        }`}
                       >
                         {userBadges.map((badge, index) => (
-                          <div
-                            key={index}
-                            style={{
-                              minWidth: 200,
-                              flexShrink: 0,
-                              textAlign: "center",
-                              padding: 20,
-                              backgroundColor: "white",
-                              border: "2px solid #f0f0f0",
-                              borderRadius: 20,
-                              transition: "all 0.3s ease",
-                              cursor: "pointer",
-                              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform =
-                                "translateY(-2px)";
-                              e.currentTarget.style.boxShadow =
-                                "0 8px 20px rgba(0,0,0,0.15)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow =
-                                "0 2px 8px rgba(0,0,0,0.05)";
-                            }}
-                          >
-                            <div style={{ marginBottom: 16 }}>
+                          <div key={index} className={styles.achievementCard}>
+                            <div className={styles.achievementImageContainer}>
                               {badge.badgeImageUrl ? (
                                 <img
                                   alt={badge.badgeName}
                                   src={badge.badgeImageUrl}
-                                  style={{
-                                    width: 120,
-                                    height: 120,
-                                    objectFit: "contain",
-                                    borderRadius: 12,
-                                  }}
+                                  className={styles.achievementImage}
                                 />
                               ) : (
                                 <div
-                                  style={{
-                                    width: 120,
-                                    height: 120,
-                                    backgroundColor: "#458FF6",
-                                    borderRadius: 12,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    margin: "0 auto",
-                                  }}
+                                  className={styles.achievementImagePlaceholder}
                                 >
                                   <TrophyOutlined
-                                    style={{
-                                      fontSize: 50,
-                                      color: "white",
-                                    }}
+                                    className={styles.achievementImageIcon}
                                   />
                                 </div>
                               )}
                             </div>
 
                             <div>
-                              <Text
-                                strong
-                                style={{
-                                  fontSize: 18,
-                                  color: "#458FF6",
-                                  display: "block",
-                                  marginBottom: 8,
-                                  lineHeight: 1.3,
-                                  fontWeight: 600,
-                                }}
-                              >
+                              <Text strong className={styles.achievementName}>
                                 {badge.badgeName || badge.name || "Achievement"}
                               </Text>
 
                               {badge.earnedDate && (
-                                <Text
-                                  style={{
-                                    fontSize: 14,
-                                    color: "#8c8c8c",
-                                    display: "block",
-                                  }}
-                                >
+                                <Text className={styles.achievementDate}>
                                   Earned:{" "}
                                   {new Date(
                                     badge.earnedDate
@@ -709,28 +745,15 @@ export const MentorClientDetails = () => {
                         ))}
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          textAlign: "center",
-                          padding: "60px 0",
-                          color: "#8c8c8c",
-                        }}
-                      >
-                        <TrophyOutlined
-                          style={{
-                            fontSize: 64,
-                            color: "#d9d9d9",
-                            marginBottom: 16,
-                            display: "block",
-                          }}
-                        />
-                        <Title
-                          level={4}
-                          style={{ color: "#8c8c8c", marginBottom: 8 }}
-                        >
+                      <div className={styles.noAchievements}>
+                        <TrophyOutlined className={styles.noAchievementsIcon} />
+                        <Title level={4} className={styles.noAchievementsTitle}>
                           No Achievements Yet
                         </Title>
-                        <Text type="secondary" style={{ fontSize: 14 }}>
+                        <Text
+                          type="secondary"
+                          className={styles.noAchievementsText}
+                        >
                           Keep supporting your client to help them earn their
                           first achievement!
                         </Text>
@@ -744,7 +767,7 @@ export const MentorClientDetails = () => {
 
           <Tabs.TabPane tab="Plan & Notes" key="plan">
             <Row gutter={24}>
-              <Col span={24}>
+              <Col span={12}>
                 {/* Reasons Section */}
                 <Card
                   title="Quit Smoking Reasons"
@@ -807,41 +830,68 @@ export const MentorClientDetails = () => {
                 </Card>
               </Col>
 
-              <Col span={12}>
-                {/* Strategies Section */}
+              <Col span={24}>
+                {/* Addiction Assessment Questions Section */}
                 <Card
-                  title="Strategies"
+                  title="Addiction Assessment Questions"
                   className={styles.motivationCard}
                   style={{ marginBottom: 16 }}
                 >
-                  <div className={styles.strategiesSection}>
-                    {userStrategies.length > 0 &&
-                    userStrategies[0]?.strategyCategories ? (
-                      userStrategies[0].strategyCategories.map((category) => (
-                        <div
-                          key={category.categoryId}
-                          style={{ marginBottom: 16 }}
-                        >
-                          <Title
-                            level={5}
-                            style={{ color: "#52c41a", marginBottom: 8 }}
-                          >
-                            {category.name}
-                          </Title>
-                          <ul className={styles.strategiesList}>
-                            {category.strategies.map((strategy) => (
-                              <li
-                                key={strategy.strategyId}
-                                className={styles.strategyItem}
-                              >
-                                {strategy.name}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))
+                  <div className={styles.questionsSection}>
+                    {userQuestions.length > 0 ? (
+                      <Row gutter={[24, 24]}>
+                        {userQuestions.map((question) => (
+                          <Col span={12} key={question.questionId}>
+                            <div className={styles.questionCard}>
+                              <Title level={5} className={styles.questionTitle}>
+                                {question.questionText}
+                              </Title>
+                              <div className={styles.questionAnswersContainer}>
+                                {question.answers.map((answer) => (
+                                  <div
+                                    key={answer.answerId}
+                                    className={`${styles.questionAnswer} ${
+                                      answer.isSelected
+                                        ? styles.questionAnswerSelected
+                                        : styles.questionAnswerDefault
+                                    }`}
+                                  >
+                                    {answer.isSelected && (
+                                      <div
+                                        className={
+                                          styles.questionAnswerIndicator
+                                        }
+                                      />
+                                    )}
+                                    <Text
+                                      className={
+                                        answer.isSelected
+                                          ? styles.questionAnswerTextSelected
+                                          : styles.questionAnswerTextDefault
+                                      }
+                                    >
+                                      {answer.answerText}
+                                      {answer.isSelected && (
+                                        <Text
+                                          className={
+                                            styles.questionAnswerPoints
+                                          }
+                                        >
+                                          (Selected - {answer.points} points)
+                                        </Text>
+                                      )}
+                                    </Text>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </Col>
+                        ))}
+                      </Row>
                     ) : (
-                      <Text type="secondary">No strategies planned yet.</Text>
+                      <Text type="secondary">
+                        No assessment questions completed yet.
+                      </Text>
                     )}
                   </div>
                 </Card>
@@ -949,9 +999,8 @@ export const MentorClientDetails = () => {
               <Row gutter={24} style={{ marginBottom: 24 }}>
                 <Col span={6}>
                   <Card
-                    className={styles.statCard}
+                    className={`${styles.statCard} ${styles.progressStatCard}`}
                     hoverable={false}
-                    style={{ backgroundColor: "#F5F8FA" }}
                   >
                     <Statistic
                       title="Days Since Start"
@@ -959,7 +1008,7 @@ export const MentorClientDetails = () => {
                       prefix={<CalendarOutlined style={{ color: "#1890ff" }} />}
                       valueStyle={{ color: "#1890ff" }}
                     />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" className={styles.progressStatText}>
                       Started:{" "}
                       {new Date(smokingProgress.startDate).toLocaleDateString(
                         "en-GB"
@@ -970,9 +1019,8 @@ export const MentorClientDetails = () => {
 
                 <Col span={6}>
                   <Card
-                    className={styles.statCard}
+                    className={`${styles.statCard} ${styles.progressStatCard}`}
                     hoverable={false}
-                    style={{ backgroundColor: "#F5F8FA" }}
                   >
                     <Statistic
                       title="Money Saved"
@@ -980,7 +1028,7 @@ export const MentorClientDetails = () => {
                       prefix={<DollarOutlined style={{ color: "#52c41a" }} />}
                       valueStyle={{ color: "#52c41a" }}
                     />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" className={styles.progressStatText}>
                       Pack cost:{" "}
                       {smokingProgress.cigarettePackCost?.toLocaleString()}
                     </Text>
@@ -989,9 +1037,8 @@ export const MentorClientDetails = () => {
 
                 <Col span={6}>
                   <Card
-                    className={styles.statCard}
+                    className={`${styles.statCard} ${styles.progressStatCard}`}
                     hoverable={false}
-                    style={{ backgroundColor: "#F5F8FA" }}
                   >
                     <Statistic
                       title="Cigarettes Avoided"
@@ -999,7 +1046,7 @@ export const MentorClientDetails = () => {
                       prefix={<FireOutlined style={{ color: "#ff4d4f" }} />}
                       valueStyle={{ color: "#ff4d4f" }}
                     />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" className={styles.progressStatText}>
                       Target: {smokingProgress.cigarettesPerDay || 0} per day
                     </Text>
                   </Card>
@@ -1007,40 +1054,49 @@ export const MentorClientDetails = () => {
 
                 <Col span={6}>
                   <Card
-                    className={styles.statCard}
+                    className={`${styles.statCard} ${styles.progressStatCard}`}
                     hoverable={false}
-                    style={{ backgroundColor: "#F5F8FA" }}
                   >
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ marginBottom: 8 }}>
-                        <Text strong style={{ fontSize: 14, color: "#8c8c8c" }}>
-                          Average Craving Level
-                        </Text>
+                    <div className={styles.cravingContainer}>
+                      <div className={styles.cravingTitle}>
+                        <Text strong>Addiction Score</Text>
                       </div>
-                      <div style={{ marginBottom: 12 }}>
+                      <div className={styles.cravingValue}>
                         <Text
                           style={{
-                            fontSize: 24,
-                            fontWeight: "bold",
-                            color: getCravingColor(
-                              smokingProgress.averageCravingLevel
+                            color: getAddictionColor(
+                              addictionScore?.dependencyLevel
                             ),
                           }}
                         >
-                          {smokingProgress.averageCravingLevel}/10
+                          {addictionScore?.totalScore || 0}/10
                         </Text>
                       </div>
                       <Progress
                         percent={
-                          (smokingProgress.averageCravingLevel / 10) * 100
+                          addictionScore?.totalScore
+                            ? (addictionScore.totalScore / 10) * 100
+                            : 0
                         }
                         showInfo={false}
-                        strokeColor={getCravingColor(
-                          smokingProgress.averageCravingLevel
+                        strokeColor={getAddictionColor(
+                          addictionScore?.dependencyLevel
                         )}
                         trailColor="#f0f0f0"
                         size="small"
                       />
+                      <Text
+                        type="secondary"
+                        style={{
+                          fontSize: "12px",
+                          marginTop: "8px",
+                          display: "block",
+                        }}
+                      >
+                        Level:{" "}
+                        {addictionScore?.dependencyLevel?.toUpperCase() ||
+                          "N/A"}
+                      </Text>
                     </div>
                   </Card>
                 </Col>
@@ -1054,19 +1110,13 @@ export const MentorClientDetails = () => {
                     className={styles.motivationCard}
                     hoverable={false}
                   >
-                    <div style={{ padding: "16px 0" }}>
+                    <div className={styles.statusInfoContainer}>
                       <Space
                         direction="vertical"
                         size="large"
                         style={{ width: "100%" }}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
+                        <div className={styles.statusInfoRow}>
                           <Text strong>Current Status:</Text>
                           <Tag
                             color={
@@ -1074,36 +1124,21 @@ export const MentorClientDetails = () => {
                                 ? "green"
                                 : "default"
                             }
-                            style={{
-                              textTransform: "capitalize",
-                              fontWeight: 500,
-                            }}
+                            className={styles.statusTag}
                           >
                             {smokingProgress.status}
                           </Tag>
                         </div>
 
                         {smokingProgress.targetDays && (
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
+                          <div className={styles.statusInfoRow}>
                             <Text strong>Target Days:</Text>
                             <Text>{smokingProgress.targetDays} days</Text>
                           </div>
                         )}
 
                         {smokingProgress.endDate && (
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
+                          <div className={styles.statusInfoRow}>
                             <Text strong>End Date:</Text>
                             <Text>
                               {new Date(
@@ -1123,55 +1158,36 @@ export const MentorClientDetails = () => {
                     className={styles.motivationCard}
                     hoverable={false}
                   >
-                    <div style={{ padding: "16px 0" }}>
+                    <div className={styles.smokingHabitsContainer}>
                       <Space
                         direction="vertical"
                         size="large"
                         style={{ width: "100%" }}
                       >
-                        <div style={{ textAlign: "center" }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: 8,
-                              marginBottom: 8,
-                            }}
-                          >
+                        <div className={styles.smokingHabitsItem}>
+                          <div className={styles.smokingHabitsHeader}>
                             <FireOutlined
-                              style={{ color: "#ff4d4f", fontSize: 20 }}
+                              className={styles.smokingHabitsIcon}
                             />
-                            <Text strong style={{ fontSize: 16 }}>
+                            <Text strong className={styles.smokingHabitsTitle}>
                               Cigarettes per Day
                             </Text>
                           </div>
-                          <Text
-                            style={{
-                              fontSize: 24,
-                              fontWeight: "bold",
-                              color: "#ff4d4f",
-                            }}
-                          >
+                          <Text className={styles.smokingHabitsValue}>
                             {smokingProgress.cigarettesPerDay}
                           </Text>
                         </div>
 
-                        <div style={{ textAlign: "center" }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: 8,
-                              marginBottom: 8,
-                            }}
-                          >
-                            <Text strong style={{ fontSize: 14 }}>
+                        <div className={styles.smokingHabitsItem}>
+                          <div className={styles.smokingHabitsHeader}>
+                            <Text
+                              strong
+                              className={styles.smokingHabitsSubtitle}
+                            >
                               Cigarettes per Pack
                             </Text>
                           </div>
-                          <Text style={{ fontSize: 18, color: "#8c8c8c" }}>
+                          <Text className={styles.smokingHabitsSubvalue}>
                             {smokingProgress.cigarettesPerPack}
                           </Text>
                         </div>
@@ -1197,19 +1213,14 @@ export const MentorClientDetails = () => {
                       .slice(0, 7) // Show last 7 days
                       .map(([date, events]) => (
                         <div key={date} style={{ marginBottom: 24 }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              marginBottom: 16,
-                              paddingBottom: 8,
-                              borderBottom: "1px solid #f0f0f0",
-                            }}
-                          >
+                          <div className={styles.smokingHistoryDateHeader}>
                             <CalendarOutlined
-                              style={{ color: "#1890ff", marginRight: 8 }}
+                              className={styles.smokingHistoryDateIcon}
                             />
-                            <Title level={5} style={{ margin: 0 }}>
+                            <Title
+                              level={5}
+                              className={styles.smokingHistoryDateTitle}
+                            >
                               {new Date(date).toLocaleDateString("en-US", {
                                 weekday: "long",
                                 year: "numeric",
@@ -1224,20 +1235,16 @@ export const MentorClientDetails = () => {
                             dataSource={events}
                             renderItem={(event) => (
                               <List.Item
-                                style={{
-                                  padding: "12px 16px",
-                                  margin: "8px 0",
-                                  backgroundColor: "#fafafa",
-                                  borderRadius: 8,
-                                  border: "1px solid #f0f0f0",
-                                }}
+                                className={styles.smokingHistoryEventItem}
                               >
                                 <List.Item.Meta
                                   avatar={
                                     <Avatar
                                       size={40}
                                       src={event.user?.avatarUrl}
-                                      style={{ backgroundColor: "#ff4d4f" }}
+                                      className={
+                                        styles.smokingHistoryEventAvatar
+                                      }
                                     >
                                       {event.user?.fullName?.charAt(0) || "U"}
                                     </Avatar>
@@ -1252,7 +1259,9 @@ export const MentorClientDetails = () => {
                                         color={getCravingColor(
                                           event.cravingLevel
                                         )}
-                                        style={{ fontWeight: 500 }}
+                                        className={
+                                          styles.smokingHistoryEventTag
+                                        }
                                       >
                                         Craving: {event.cravingLevel}/10
                                       </Tag>
@@ -1262,7 +1271,9 @@ export const MentorClientDetails = () => {
                                     <Space direction="vertical" size="small">
                                       <Text type="secondary">
                                         <CalendarOutlined
-                                          style={{ marginRight: 4 }}
+                                          className={
+                                            styles.smokingHistoryEventTime
+                                          }
                                         />
                                         {new Date(
                                           event.eventTime
@@ -1271,7 +1282,9 @@ export const MentorClientDetails = () => {
                                       {event.notes && (
                                         <Text
                                           italic
-                                          style={{ color: "#595959" }}
+                                          className={
+                                            styles.smokingHistoryEventNote
+                                          }
                                         >
                                           "{event.notes}"
                                         </Text>
@@ -1287,23 +1300,13 @@ export const MentorClientDetails = () => {
 
                     {Object.keys(smokingProgress.smokingHistoryByDate)
                       .length === 0 && (
-                      <div
-                        style={{
-                          textAlign: "center",
-                          padding: "40px 0",
-                          color: "#8c8c8c",
-                        }}
-                      >
+                      <div className={styles.noSmokingHistory}>
                         <CalendarOutlined
-                          style={{
-                            fontSize: 48,
-                            marginBottom: 16,
-                            color: "#d9d9d9",
-                          }}
+                          className={styles.noSmokingHistoryIcon}
                         />
                         <Title
                           level={4}
-                          style={{ color: "#8c8c8c", marginBottom: 8 }}
+                          className={styles.noSmokingHistoryTitle}
                         >
                           No Smoking History Yet
                         </Title>
@@ -1316,15 +1319,166 @@ export const MentorClientDetails = () => {
                 )}
             </Tabs.TabPane>
           )}
+
+          {/* Task Management Tab */}
+          <Tabs.TabPane tab="Task Management" key="tasks">
+            <div className={styles.taskManagementContainer}>
+              <Row gutter={[16, 16]} className={styles.taskManagementHeader}>
+                <Col span={24}>
+                  <div className={styles.taskManagementHeaderContent}>
+                    <Title level={3} style={{ margin: 0 }}>
+                      Client Tasks
+                    </Title>
+                    <Space>
+                      <Button
+                        color="primary"
+                        variant="filled"
+                        icon={<BellOutlined />}
+                        onClick={handleOpenNotificationModal}
+                      >
+                        Send Notification
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleCreateTask}
+                      >
+                        Create New Task
+                      </Button>
+                    </Space>
+                  </div>
+                </Col>
+              </Row>
+
+              {loadingTasks ? (
+                <div className={styles.taskLoadingContainer}>
+                  <Spin size="large" />
+                  <div className={styles.taskLoadingText}>Loading tasks...</div>
+                </div>
+              ) : (
+                <Row gutter={[16, 16]}>
+                  {userTasks.length > 0 ? (
+                    userTasks.map((task) => (
+                      <Col xs={24} sm={24} md={12} lg={8} key={task.taskId}>
+                        <Card
+                          className={styles.taskCard}
+                          hoverable
+                          actions={[
+                            <Button
+                              key="edit"
+                              type="text"
+                              icon={<EditOutlined />}
+                              onClick={() => handleEditTask(task)}
+                            >
+                              Edit
+                            </Button>,
+                            task.status === "pending" ? (
+                              <Dropdown
+                                key="status"
+                                menu={{ items: getTaskActions(task) }}
+                                trigger={["click"]}
+                                placement="bottomRight"
+                              >
+                                <Button
+                                  type="text"
+                                  loading={updatingTaskId === task.taskId}
+                                >
+                                  Update Status
+                                </Button>
+                              </Dropdown>
+                            ) : (
+                              <Button
+                                key="completed"
+                                type="text"
+                                icon={<CheckCircleOutlined />}
+                                disabled
+                              >
+                                {task.status === "completed"
+                                  ? "Completed"
+                                  : "Failed"}
+                              </Button>
+                            ),
+                            <Button
+                              key="delete"
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => handleDeleteTask(task.taskId)}
+                            >
+                              Delete
+                            </Button>,
+                          ]}
+                        >
+                          <div className={styles.taskDateHeader}>
+                            <Text strong className={styles.taskDateText}>
+                              Task Date:{" "}
+                              {new Date(task.taskDay).toLocaleDateString()}
+                            </Text>
+                            <Tag
+                              color={
+                                task.status === "completed"
+                                  ? "green"
+                                  : task.status === "failed"
+                                  ? "red"
+                                  : "blue"
+                              }
+                            >
+                              {task.status === "completed"
+                                ? "Completed"
+                                : task.status === "failed"
+                                ? "Failed"
+                                : "Pending"}
+                            </Tag>
+                          </div>
+
+                          <div className={styles.taskSupportMeasuresWrapper}>
+                            <div
+                              className={styles.taskSupportMeasuresContainer}
+                            >
+                              <Text className={styles.taskSupportMeasuresText}>
+                                "{task.customSupportMeasures}"
+                              </Text>
+                            </div>
+                          </div>
+
+                          <div className={styles.taskTargetWrapper}>
+                            <Text
+                              type="secondary"
+                              className={styles.taskTargetText}
+                            >
+                              Target: {task.targetCigarettes} cigarettes
+                            </Text>
+                          </div>
+                        </Card>
+                      </Col>
+                    ))
+                  ) : (
+                    <Col span={24}>
+                      <div className={styles.noTasksContainer}>
+                        <ClockCircleOutlined className={styles.noTasksIcon} />
+                        <Title level={4} className={styles.noTasksTitle}>
+                          No Tasks Assigned Yet
+                        </Title>
+                        <Text type="secondary">
+                          Create tasks to help guide your client's smoking
+                          cessation journey.
+                        </Text>
+                      </div>
+                    </Col>
+                  )}
+                </Row>
+              )}
+            </div>
+          </Tabs.TabPane>
         </Tabs>
       </Card>
 
       {/* Consultation Notes Modal */}
       <Modal
         title={
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <CalendarOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-            <Text strong style={{ fontSize: "16px" }}>
+          <div className={styles.modalHeader}>
+            <CalendarOutlined className={styles.modalHeaderIcon} />
+            <Text strong className={styles.modalHeaderTitle}>
               Consultation Details
             </Text>
           </div>
@@ -1342,39 +1496,17 @@ export const MentorClientDetails = () => {
         {selectedConsultation && (
           <div>
             {/* Consultation Information Card */}
-            <Card style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 16,
-                }}
-              >
-                <CalendarOutlined
-                  style={{ marginRight: 8, color: "#1890ff" }}
-                />
-                <Title level={5} style={{ margin: 0 }}>
+            <Card className={styles.consultationInfoCard}>
+              <div className={styles.consultationInfoHeader}>
+                <CalendarOutlined className={styles.consultationInfoIcon} />
+                <Title level={5} className={styles.consultationInfoTitle}>
                   Consultation Information
                 </Title>
               </div>
               <Row gutter={[16, 12]}>
                 <Col span={12}>
-                  <div
-                    style={{
-                      padding: "12px",
-                      background: "#fafafa",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#8c8c8c",
-                        fontSize: "12px",
-                        display: "block",
-                      }}
-                    >
-                      DATE
-                    </Text>
+                  <div className={styles.consultationInfoItem}>
+                    <Text className={styles.consultationInfoLabel}>DATE</Text>
                     <Text strong>
                       {new Date(selectedConsultation.date).toLocaleDateString(
                         "en-GB"
@@ -1383,64 +1515,22 @@ export const MentorClientDetails = () => {
                   </div>
                 </Col>
                 <Col span={12}>
-                  <div
-                    style={{
-                      padding: "12px",
-                      background: "#fafafa",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#8c8c8c",
-                        fontSize: "12px",
-                        display: "block",
-                      }}
-                    >
-                      TIME
-                    </Text>
+                  <div className={styles.consultationInfoItem}>
+                    <Text className={styles.consultationInfoLabel}>TIME</Text>
                     <Text strong>{selectedConsultation.time}</Text>
                   </div>
                 </Col>
                 <Col span={12}>
-                  <div
-                    style={{
-                      padding: "12px",
-                      background: "#fafafa",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#8c8c8c",
-                        fontSize: "12px",
-                        display: "block",
-                      }}
-                    >
-                      STATUS
-                    </Text>
+                  <div className={styles.consultationInfoItem}>
+                    <Text className={styles.consultationInfoLabel}>STATUS</Text>
                     <Text strong style={{ textTransform: "capitalize" }}>
                       {selectedConsultation.status}
                     </Text>
                   </div>
                 </Col>
                 <Col span={12}>
-                  <div
-                    style={{
-                      padding: "12px",
-                      background: "#fafafa",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#8c8c8c",
-                        fontSize: "12px",
-                        display: "block",
-                      }}
-                    >
-                      TYPE
-                    </Text>
+                  <div className={styles.consultationInfoItem}>
+                    <Text className={styles.consultationInfoLabel}>TYPE</Text>
                     <Text strong>{selectedConsultation.type}</Text>
                   </div>
                 </Col>
@@ -1450,54 +1540,27 @@ export const MentorClientDetails = () => {
             {/* Rating and Feedback Card */}
             {(selectedConsultation.rating > 0 ||
               selectedConsultation.feedback) && (
-              <Card style={{ marginBottom: 20 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginBottom: 16,
-                  }}
-                >
-                  <StarOutlined style={{ marginRight: 8, color: "#faad14" }} />
-                  <Title level={5} style={{ margin: 0 }}>
+              <Card className={styles.ratingFeedbackCard}>
+                <div className={styles.ratingFeedbackHeader}>
+                  <StarOutlined className={styles.ratingFeedbackIcon} />
+                  <Title level={5} className={styles.ratingFeedbackTitle}>
                     Rating & Feedback
                   </Title>
                 </div>
                 {selectedConsultation.rating > 0 && (
-                  <div
-                    style={{
-                      marginBottom: 16,
-                      padding: "12px",
-                      background: "#fafafa",
-                      borderRadius: "4px",
-                    }}
-                  >
+                  <div className={styles.ratingContainer}>
                     <Text strong style={{ marginRight: 12 }}>
                       Rating:
                     </Text>
                     <Rate disabled defaultValue={selectedConsultation.rating} />
-                    <Text style={{ marginLeft: 8, color: "#faad14" }}>
+                    <Text className={styles.ratingValue}>
                       ({selectedConsultation.rating}/5)
                     </Text>
                   </div>
                 )}
                 {selectedConsultation.feedback && (
-                  <div
-                    style={{
-                      padding: "12px",
-                      background: "#fafafa",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <Text
-                      strong
-                      style={{
-                        display: "block",
-                        marginBottom: 8,
-                        color: "#8c8c8c",
-                        fontSize: "12px",
-                      }}
-                    >
+                  <div className={styles.feedbackContainer}>
+                    <Text strong className={styles.feedbackLabel}>
                       FEEDBACK
                     </Text>
                     <Text>"{selectedConsultation.feedback}"</Text>
@@ -1507,32 +1570,134 @@ export const MentorClientDetails = () => {
             )}
 
             {/* Notes Card */}
-            <Card style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: 16,
-                }}
-              >
-                <EditOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-                <Title level={5} style={{ margin: 0 }}>
+            <Card className={styles.notesCard}>
+              <div className={styles.notesHeader}>
+                <EditOutlined className={styles.notesIcon} />
+                <Title level={5} className={styles.notesTitle}>
                   Consultation Notes
                 </Title>
               </div>
-              <div
-                style={{
-                  padding: "12px",
-                  background: "#fafafa",
-                  borderRadius: "4px",
-                  minHeight: "100px",
-                }}
-              >
+              <div className={styles.notesContent}>
                 <Text>{selectedConsultation.notes}</Text>
               </div>
             </Card>
           </div>
         )}
+      </Modal>
+
+      {/* Task Management Modal */}
+      <Modal
+        title={editingTask ? "Edit Task" : "Create New Task"}
+        open={taskModalVisible}
+        onCancel={() => setTaskModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={taskForm}
+          layout="vertical"
+          onFinish={handleSaveTask}
+          style={{ marginTop: "20px" }}
+        >
+          <Form.Item
+            name="taskDay"
+            label="Task Date"
+            rules={[{ required: true, message: "Please select a task date" }]}
+          >
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item
+            name="customSupportMeasures"
+            label="Support Measures"
+            rules={[
+              { required: true, message: "Please enter support measures" },
+            ]}
+          >
+            <TextArea
+              rows={4}
+              placeholder="Enter custom support measures for the client..."
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="targetCigarettes"
+            label="Target Cigarettes"
+            rules={[
+              { required: true, message: "Please enter target cigarettes" },
+            ]}
+          >
+            <InputNumber
+              min={0}
+              style={{ width: "100%" }}
+              placeholder="Enter target number of cigarettes"
+            />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
+            <Space>
+              <Button onClick={() => setTaskModalVisible(false)}>Cancel</Button>
+              <Button type="primary" htmlType="submit">
+                {editingTask ? "Update Task" : "Create Task"}
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Notification Modal */}
+      <Modal
+        title="Send Notification to User"
+        open={notificationModalVisible}
+        onCancel={() => setNotificationModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={notificationForm}
+          layout="vertical"
+          onFinish={handleSendNotification}
+          style={{ marginTop: "20px" }}
+        >
+          <Form.Item
+            name="title"
+            label="Title"
+            rules={[
+              { required: true, message: "Please enter notification title" },
+            ]}
+          >
+            <Input placeholder="Enter notification title..." />
+          </Form.Item>
+
+          <Form.Item
+            name="message"
+            label="Message"
+            rules={[
+              { required: true, message: "Please enter notification message" },
+            ]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder="Enter notification message for the user..."
+            />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
+            <Space>
+              <Button onClick={() => setNotificationModalVisible(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={sendingNotification}
+                icon={<BellOutlined />}
+              >
+                Send Notification
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Modal>
     </>
   );

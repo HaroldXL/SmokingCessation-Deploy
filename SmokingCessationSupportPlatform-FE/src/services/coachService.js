@@ -63,5 +63,61 @@ export const coachService = {
   getUserBadges: async (userId) => {
     const response = await api.get(`achievements/badges/${userId}`);
     return response.data;
+  },
+
+  // Lấy câu hỏi của user
+  getUserQuestions: async (userId) => {
+    const response = await api.get(`/question-answer/questions?userId=${userId}`);
+    return response.data;
+  },
+
+  // Lấy điểm nghiện của user
+  getUserAddictionScore: async (userId) => {
+    const response = await api.get(`/question-answer/scores/${userId}`);
+    return response.data;
+  },
+
+  // Mentor gán task cho user pro
+  assignTaskToUser: async (taskData) => {
+    const response = await api.post('/plan-tasks-pro/assign', taskData);
+    return response.data;
+  },
+
+  // Mentor lấy danh sách task của 1 user cụ thể do chính mình gán
+  getMentorUserTasks: async (userId) => {
+    const response = await api.get(`/plan-tasks-pro/mentor/${userId}`);
+    return response.data;
+  },
+
+  // Mentor cập nhật nội dung task đã giao
+  updateTask: async (taskId, taskData) => {
+    const response = await api.put(`/plan-tasks-pro/${taskId}`, taskData);
+    return response.data;
+  },
+
+  // Mentor cập nhật trạng thái task
+  updateTaskStatus: async (taskId, status) => {
+    const response = await api.put(`/plan-tasks-pro/${taskId}/status`, status, {
+      headers: {
+        'Content-Type': 'text/plain'
+      }
+    });
+    return response.data;
+  },
+
+  // Mentor xóa task của client
+  deleteTask: async (taskId) => {
+    const response = await api.delete(`/plan-tasks-pro/mentor/${taskId}`);
+    return response.data;
+  },
+
+  // Gửi thông báo cho user
+  sendNotificationToUser: async (notificationData) => {
+    const { mentorId, userId, title, message } = notificationData;
+    const response = await api.post('/notifications/send', 
+      {},
+      { params: { mentorId, userId, title, message } }
+    );
+    return response.data;
   }
 }

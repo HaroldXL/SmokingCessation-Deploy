@@ -35,6 +35,8 @@ import OthersPosts from "./pages/Profile/OthersProfile/posts/othersPosts.jsx";
 import OtherBadges from "./pages/Profile/OthersProfile/badges/otherBadges.jsx";
 import UserPosts from "./pages/Profile/UserProfile/posts/userPosts.jsx";
 import UserBookings from "./pages/Profile/UserProfile/bookings/bookings.jsx";
+import FreeTask from "./pages/Profile/UserProfile/freeTask/freeTask.jsx";
+import ProTask from "./pages/Profile/UserProfile/proTask/proTask.jsx";
 import PlanDetail from "./pages/QuitPlan/PlanDetail/planDetail.jsx";
 import Membership from "./pages/Profile/UserProfile/membership/membership.jsx";
 import UserCoachDetail from "./pages/UserCoach/CoachDetail/userCoachDetail.jsx";
@@ -49,6 +51,7 @@ import AboutUs from "./pages/AboutUs/aboutUs.jsx";
 import ScheduleManagement from "./pages/AdminPages/ScheduleManagenment/ScheduleManagement.jsx";
 import PaymentResult from "./pages/PaymentResult/paymentResult.jsx";
 import BadgeManagement from "./pages/AdminPages/BadgeManagement/BadgeManagement.jsx";
+import Notification from "./pages/Notification/notification.jsx";
 
 const ProtectRouteAuth = ({ children }) => {
   const user = useSelector((store) => store.user);
@@ -324,6 +327,30 @@ function App() {
           element: (
             <ProtectUserProfile>
               <UserBookings />
+            </ProtectUserProfile>
+          ),
+        },
+        {
+          path: "user-profile/free-task",
+          element: (
+            <ProtectUserProfile>
+              <FreeTask />
+            </ProtectUserProfile>
+          ),
+        },
+        {
+          path: "user-profile/pro-task",
+          element: (
+            <ProtectUserProfile>
+              <ProTask />
+            </ProtectUserProfile>
+          ),
+        },
+        {
+          path: "notifications",
+          element: (
+            <ProtectUserProfile>
+              <Notification />
             </ProtectUserProfile>
           ),
         },

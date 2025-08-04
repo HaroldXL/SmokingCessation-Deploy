@@ -1,0 +1,51 @@
+.wrapper__profile-badges-description {
+  font-weight: lighter;
+  margin-bottom: 20px;
+}
+
+.mentor-fullname {
+  font-weight: lighter;
+  color: #7D7987;
+}
+
+.wrapper__profile-bookings-card-date-details-mentor {
+   padding: 0;
+   height: auto;
+   font-size: 16px;
+   font-weight: 600;
+}
+
+.wrapper__profile-bookings-card-coach-info-support {
+  background-color: #f6f8fa;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+}
+
+.wrapper__profile-bookings-card-coach-info-support p {
+  font-style: italic;
+  color: #586069;
+  margin: 0;
+  color: #7D7987;
+  font-size: 16px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.wrapper__profile-pro-task-categor-card {
+  width: 31%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #f0eeee;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wrapper__profile-pro-task-categor-card.active {
+    background-color: #c2dbff;
+    transition: all 0.5s ease;
+}

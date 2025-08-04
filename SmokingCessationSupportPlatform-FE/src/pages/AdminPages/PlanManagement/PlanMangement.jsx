@@ -19,7 +19,8 @@ import AdminLayout from "../../../components/layout/AdminLayout.jsx";
 import {
   reasonService,
   triggerService,
-  strategyService,
+  questionService,
+  supportMeasureService,
 } from "../../../services/planService.js";
 import "./PlanManagement.css";
 
@@ -30,20 +31,26 @@ const { Title, Paragraph } = Typography;
 function PlanManagement() {
   const [reasons, setReasons] = useState([]);
   const [triggers, setTriggers] = useState([]);
-  const [strategies, setStrategies] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [supportMeasures, setSupportMeasures] = useState([]);
   const [isReasonModalVisible, setIsReasonModalVisible] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
+  const [isSupportMeasureModalVisible, setIsSupportMeasureModalVisible] =
+    useState(false);
   const [currentModalType, setCurrentModalType] = useState("triggers");
   const [loading, setLoading] = useState(false);
   const [triggersLoading, setTriggersLoading] = useState(false);
-  const [strategiesLoading, setStrategiesLoading] = useState(false);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [supportMeasuresLoading, setSupportMeasuresLoading] = useState(false);
   const [editingReason, setEditingReason] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const [editingSupportMeasure, setEditingSupportMeasure] = useState(null);
   const [form] = Form.useForm();
   const [categoryForm] = Form.useForm();
   const [itemForm] = Form.useForm();
+  const [supportMeasureForm] = Form.useForm();
 
   const fetchReasons = async () => {
     try {
@@ -86,33 +93,75 @@ function PlanManagement() {
     }
   };
 
-  const fetchStrategies = async () => {
+  const fetchQuestions = async () => {
     try {
-      setStrategiesLoading(true);
-      const data = await strategyService.getAllStrategyCategories();
-      // Map API data to match our component structure
-      const mappedStrategies = data.map((category) => ({
-        id: category.categoryId,
-        name: category.name,
-        items: category.strategies.map((strategy) => ({
-          id: strategy.strategyId,
-          title: strategy.name,
-        })),
-      }));
-      setStrategies(mappedStrategies);
+      setQuestionsLoading(true);
+      const data = await questionService.getAllQuestions();
+
+      // Get answers for each question
+      const questionsWithAnswers = await Promise.all(
+        data.map(async (question) => {
+          try {
+            const answers = await questionService.getQuestionAnswers(
+              question.questionId
+            );
+            return {
+              id: question.questionId,
+              title: question.questionText,
+              items: answers.map((answer) => ({
+                id: answer.answerId,
+                title: answer.answerText,
+                points: answer.points,
+              })),
+            };
+          } catch (error) {
+            console.error(
+              `Failed to fetch answers for question ${question.questionId}:`,
+              error
+            );
+            return {
+              id: question.questionId,
+              title: question.questionText,
+              items: [],
+            };
+          }
+        })
+      );
+
+      setQuestions(questionsWithAnswers);
     } catch (error) {
-      console.error("Failed to fetch strategies:", error);
-      message.error("Failed to fetch strategies");
+      console.error("Failed to fetch questions:", error);
+      message.error("Failed to fetch questions");
     } finally {
-      setStrategiesLoading(false);
+      setQuestionsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchReasons();
     fetchTriggers();
-    fetchStrategies();
+    fetchQuestions();
+    fetchSupportMeasures();
   }, []);
+
+  const fetchSupportMeasures = async () => {
+    try {
+      setSupportMeasuresLoading(true);
+      const data = await supportMeasureService.getAllSupportMeasures();
+      // Map API data to match our component structure
+      const mappedSupportMeasures = data.map((measure) => ({
+        id: measure.supportMeasuresId,
+        title: measure.supportMeasures,
+        description: measure.description || "", // Default empty if no description
+      }));
+      setSupportMeasures(mappedSupportMeasures);
+    } catch (error) {
+      console.error("Failed to fetch support measures:", error);
+      message.error("Failed to fetch support measures");
+    } finally {
+      setSupportMeasuresLoading(false);
+    }
+  };
 
   const handleReasonAction = (action, reason = null) => {
     if (action === "add") {
@@ -174,6 +223,70 @@ function PlanManagement() {
     }
   };
 
+  const handleSupportMeasureAction = (action, supportMeasure = null) => {
+    if (action === "add") {
+      setEditingSupportMeasure(null);
+      supportMeasureForm.resetFields();
+      setIsSupportMeasureModalVisible(true);
+    } else if (action === "edit") {
+      setEditingSupportMeasure(supportMeasure);
+      supportMeasureForm.setFieldsValue({
+        title: supportMeasure.title,
+      });
+      setIsSupportMeasureModalVisible(true);
+    } else if (action === "delete") {
+      Modal.confirm({
+        title: "Are you sure you want to delete this support measure?",
+        content: "This action cannot be undone.",
+        okText: "Yes, Delete",
+        okType: "danger",
+        cancelText: "Cancel",
+        onOk: async () => {
+          try {
+            await supportMeasureService.deleteSupportMeasure(supportMeasure.id);
+            message.success("Support measure deleted successfully!");
+            fetchSupportMeasures();
+          } catch {
+            message.error("Failed to delete support measure");
+          }
+        },
+      });
+    }
+  };
+
+  const handleSupportMeasureSubmit = async () => {
+    try {
+      const values = await supportMeasureForm.validateFields();
+
+      if (editingSupportMeasure) {
+        // Update existing support measure
+        await supportMeasureService.updateSupportMeasure(
+          editingSupportMeasure.id,
+          {
+            supportMeasures: values.title,
+          }
+        );
+        message.success("Support measure updated successfully!");
+      } else {
+        // Create new support measure
+        await supportMeasureService.createSupportMeasure({
+          supportMeasures: values.title,
+        });
+        message.success("Support measure added successfully!");
+      }
+
+      fetchSupportMeasures();
+      setIsSupportMeasureModalVisible(false);
+      supportMeasureForm.resetFields();
+      setEditingSupportMeasure(null);
+    } catch (error) {
+      console.error("Failed to save support measure:", error);
+      message.error(
+        `Failed to ${editingSupportMeasure ? "update" : "add"} support measure`
+      );
+    }
+  };
+
   const handleCategoryAction = (action, type, category = null) => {
     if (action === "add") {
       setCurrentModalType(type);
@@ -184,14 +297,17 @@ function PlanManagement() {
       setCurrentModalType(type);
       setEditingCategory(category);
       categoryForm.setFieldsValue({
-        name: category.name,
+        name: category.name || category.title, // Questions use title, categories use name
       });
       setIsCategoryModalVisible(true);
     } else if (action === "delete") {
+      const itemName = type === "triggers" ? "category" : "question";
       Modal.confirm({
-        title: "Are you sure you want to delete this category?",
+        title: `Are you sure you want to delete this ${itemName}?`,
         content:
-          "This action cannot be undone and will delete all items in this category.",
+          type === "triggers"
+            ? "This action cannot be undone and will delete all items in this category."
+            : "This action cannot be undone and will delete all answers for this question.",
         okText: "Yes, Delete",
         okType: "danger",
         cancelText: "Cancel",
@@ -202,12 +318,12 @@ function PlanManagement() {
               message.success("Category deleted successfully!");
               fetchTriggers();
             } else {
-              await strategyService.deleteStrategyCategory(category.id);
-              message.success("Category deleted successfully!");
-              fetchStrategies();
+              await questionService.deleteQuestion(category.id);
+              message.success("Question deleted successfully!");
+              fetchQuestions();
             }
           } catch {
-            message.error("Failed to delete category");
+            message.error(`Failed to delete ${itemName}`);
           }
         },
       });
@@ -219,7 +335,7 @@ function PlanManagement() {
       const values = await categoryForm.validateFields();
 
       if (editingCategory) {
-        // Update existing category
+        // Update existing category/question
         if (currentModalType === "triggers") {
           await triggerService.updateTriggerCategory(editingCategory.id, {
             name: values.name,
@@ -227,14 +343,14 @@ function PlanManagement() {
           message.success("Category updated successfully!");
           fetchTriggers();
         } else {
-          await strategyService.updateStrategyCategory(editingCategory.id, {
-            name: values.name,
+          await questionService.updateQuestion(editingCategory.id, {
+            questionText: values.name,
           });
-          message.success("Category updated successfully!");
-          fetchStrategies();
+          message.success("Question updated successfully!");
+          fetchQuestions();
         }
       } else {
-        // Create new category
+        // Create new category/question
         if (currentModalType === "triggers") {
           await triggerService.createTriggerCategory({
             name: values.name,
@@ -242,11 +358,11 @@ function PlanManagement() {
           message.success("Category added successfully!");
           fetchTriggers();
         } else {
-          await strategyService.createStrategyCategory({
-            name: values.name,
+          await questionService.createQuestion({
+            questionText: values.name,
           });
-          message.success("Category added successfully!");
-          fetchStrategies();
+          message.success("Question added successfully!");
+          fetchQuestions();
         }
       }
 
@@ -254,8 +370,12 @@ function PlanManagement() {
       categoryForm.resetFields();
       setEditingCategory(null);
     } catch (error) {
-      console.error("Failed to save category:", error);
-      message.error(`Failed to ${editingCategory ? "update" : "add"} category`);
+      console.error("Failed to save category/question:", error);
+      const itemType =
+        currentModalType === "triggers" ? "category" : "question";
+      message.error(
+        `Failed to ${editingCategory ? "update" : "add"} ${itemType}`
+      );
     }
   };
 
@@ -270,13 +390,13 @@ function PlanManagement() {
       setEditingItem({ ...item, categoryId });
       itemForm.setFieldsValue({
         title: item.title,
+        points: item.points, // For answers only
       });
       setIsItemModalVisible(true);
     } else if (action === "delete") {
+      const itemTypeName = type === "triggers" ? "trigger" : "answer";
       Modal.confirm({
-        title: `Are you sure you want to delete this ${
-          type === "triggers" ? "trigger" : "strategy"
-        }?`,
+        title: `Are you sure you want to delete this ${itemTypeName}?`,
         content: "This action cannot be undone.",
         okText: "Yes, Delete",
         okType: "danger",
@@ -288,14 +408,12 @@ function PlanManagement() {
               message.success("Trigger deleted successfully!");
               fetchTriggers();
             } else {
-              await strategyService.deleteStrategy(item.id);
-              message.success("Strategy deleted successfully!");
-              fetchStrategies();
+              await questionService.deleteAnswer(item.id);
+              message.success("Answer deleted successfully!");
+              fetchQuestions();
             }
           } catch {
-            message.error(
-              `Failed to delete ${type === "triggers" ? "trigger" : "strategy"}`
-            );
+            message.error(`Failed to delete ${itemTypeName}`);
           }
         },
       });
@@ -316,12 +434,12 @@ function PlanManagement() {
           message.success("Trigger updated successfully!");
           fetchTriggers();
         } else {
-          await strategyService.updateStrategy(editingItem.id, {
-            name: values.title,
-            categoryId: editingItem.categoryId,
+          await questionService.updateAnswer(editingItem.id, {
+            answerText: values.title,
+            points: values.points,
           });
-          message.success("Strategy updated successfully!");
-          fetchStrategies();
+          message.success("Answer updated successfully!");
+          fetchQuestions();
         }
       } else {
         // Create new item
@@ -333,12 +451,12 @@ function PlanManagement() {
           message.success("Trigger added successfully!");
           fetchTriggers();
         } else {
-          await strategyService.createStrategy({
-            name: values.title,
-            categoryId: editingItem.categoryId,
+          await questionService.createAnswer(editingItem.categoryId, {
+            answerText: values.title,
+            points: values.points,
           });
-          message.success("Strategy added successfully!");
-          fetchStrategies();
+          message.success("Answer added successfully!");
+          fetchQuestions();
         }
       }
 
@@ -347,10 +465,9 @@ function PlanManagement() {
       setEditingItem(null);
     } catch (error) {
       console.error("Failed to save item:", error);
+      const itemType = currentModalType === "triggers" ? "trigger" : "answer";
       message.error(
-        `Failed to ${editingItem.id ? "update" : "add"} ${
-          currentModalType === "triggers" ? "trigger" : "strategy"
-        }`
+        `Failed to ${editingItem.id ? "update" : "add"} ${itemType}`
       );
     }
   };
@@ -367,11 +484,13 @@ function PlanManagement() {
       icon: <EditOutlined />,
       onClick: () => {
         if (type === "reason") handleReasonAction("edit", item);
+        else if (type === "supportMeasure")
+          handleSupportMeasureAction("edit", item);
         else if (type === "category") {
           const category =
             itemType === "triggers"
               ? triggers.find((t) => t.id === categoryId)
-              : strategies.find((s) => s.id === categoryId);
+              : questions.find((q) => q.id === categoryId);
           handleCategoryAction("edit", itemType, category);
         } else handleItemAction("edit", itemType, item, categoryId);
       },
@@ -383,11 +502,13 @@ function PlanManagement() {
       danger: true,
       onClick: () => {
         if (type === "reason") handleReasonAction("delete", item);
+        else if (type === "supportMeasure")
+          handleSupportMeasureAction("delete", item);
         else if (type === "category") {
           const category =
             itemType === "triggers"
               ? triggers.find((t) => t.id === categoryId)
-              : strategies.find((s) => s.id === categoryId);
+              : questions.find((q) => q.id === categoryId);
           handleCategoryAction("delete", itemType, category);
         } else handleItemAction("delete", itemType, item, categoryId);
       },
@@ -408,6 +529,20 @@ function PlanManagement() {
     </div>
   );
 
+  const SupportMeasureCard = ({ supportMeasure }) => (
+    <div className="reason-box">
+      <div className="reason-header">
+        <span className="reason-title">{supportMeasure.title}</span>
+        <Dropdown
+          menu={{ items: getActionMenuItems("supportMeasure", supportMeasure) }}
+          trigger={["click"]}
+        >
+          <Button type="text">⋯</Button>
+        </Dropdown>
+      </div>
+    </div>
+  );
+
   const CategorySection = ({ type, data, loading }) => (
     <div className="category-section">
       <Spin spinning={loading}>
@@ -419,11 +554,12 @@ function PlanManagement() {
                 <div className="category-header">
                   <div className="category-info">
                     <Title level={4} className="category-title">
-                      {category.name}
+                      {category.name || category.title}
                     </Title>
                   </div>
                   <Tag className="category-count">
-                    {category.items.length} items
+                    {category.items.length}{" "}
+                    {type === "questions" ? "answers" : "items"}
                   </Tag>
                 </div>
               }
@@ -449,6 +585,11 @@ function PlanManagement() {
                   <div key={item.id} className="category-item">
                     <div className="item-content">
                       <span className="item-title">{item.title}</span>
+                      {type === "questions" && item.points !== undefined && (
+                        <span className="item-points">
+                          Points: {item.points}
+                        </span>
+                      )}
                     </div>
                     <Dropdown
                       menu={{
@@ -476,7 +617,7 @@ function PlanManagement() {
                     handleItemAction("add", type, null, category.id)
                   }
                 >
-                  Add New {type === "triggers" ? "Trigger" : "Strategy"}
+                  Add New {type === "triggers" ? "Trigger" : "Answer"}
                 </Button>
               </div>
             </Panel>
@@ -551,30 +692,61 @@ function PlanManagement() {
               </div>
             </TabPane>
 
-            <TabPane tab={<span>Strategies</span>} key="strategies">
+            <TabPane tab={<span>Questions</span>} key="questions">
               <div className="tab-content">
                 <div className="tab-header">
                   <div>
-                    <Title level={3}>Smoking Strategies</Title>
+                    <Title level={3}>Addiction Assessment Questions</Title>
                     <Paragraph>
-                      Effective strategies to overcome smoking urges and
-                      maintain quit goals
+                      Manage addiction assessment questions and their answer
+                      options. Questions help evaluate user's dependency level.
                     </Paragraph>
                   </div>
                   <Button
                     type="primary"
                     icon={<PlusOutlined />}
-                    onClick={() => handleCategoryAction("add", "strategies")}
+                    onClick={() => handleCategoryAction("add", "questions")}
                   >
-                    Add New Category
+                    Add New Question
                   </Button>
                 </div>
 
                 <CategorySection
-                  type="strategies"
-                  data={strategies}
-                  loading={strategiesLoading}
+                  type="questions"
+                  data={questions}
+                  loading={questionsLoading}
                 />
+              </div>
+            </TabPane>
+
+            <TabPane tab={<span>Support Measures</span>} key="supportMeasures">
+              <div className="tab-content">
+                <div className="tab-header">
+                  <div>
+                    <Title level={3}>Support Measures</Title>
+                    <Paragraph>
+                      Manage support measures that help users maintain their
+                      quit journey and cope with challenges.
+                    </Paragraph>
+                  </div>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => handleSupportMeasureAction("add")}
+                  >
+                    Add Support Measure
+                  </Button>
+                </div>
+
+                <Spin spinning={supportMeasuresLoading}>
+                  <Row gutter={[16, 16]} className="reasons-grid">
+                    {supportMeasures.map((supportMeasure) => (
+                      <Col xs={24} md={12} key={supportMeasure.id}>
+                        <SupportMeasureCard supportMeasure={supportMeasure} />
+                      </Col>
+                    ))}
+                  </Row>
+                </Spin>
               </div>
             </TabPane>
           </Tabs>
@@ -618,8 +790,8 @@ function PlanManagement() {
 
         <Modal
           title={`${editingCategory ? "Edit" : "Add New"} ${
-            currentModalType === "triggers" ? "Trigger" : "Strategy"
-          } Category`}
+            currentModalType === "triggers" ? "Trigger Category" : "Question"
+          }`}
           open={isCategoryModalVisible}
           onCancel={() => {
             setIsCategoryModalVisible(false);
@@ -638,26 +810,49 @@ function PlanManagement() {
               Cancel
             </Button>,
             <Button key="submit" type="primary" onClick={handleCategorySubmit}>
-              {editingCategory ? "Update Category" : "Add Category"}
+              {editingCategory
+                ? `Update ${
+                    currentModalType === "triggers" ? "Category" : "Question"
+                  }`
+                : `Add ${
+                    currentModalType === "triggers" ? "Category" : "Question"
+                  }`}
             </Button>,
           ]}
         >
           <Form form={categoryForm} layout="vertical">
             <Form.Item
               name="name"
-              label="Category Name"
+              label={
+                currentModalType === "triggers"
+                  ? "Category Name"
+                  : "Question Text"
+              }
               rules={[
-                { required: true, message: "Please enter category name" },
+                {
+                  required: true,
+                  message: `Please enter ${
+                    currentModalType === "triggers"
+                      ? "category name"
+                      : "question text"
+                  }`,
+                },
               ]}
             >
-              <Input placeholder="Enter category name..." />
+              <Input
+                placeholder={`Enter ${
+                  currentModalType === "triggers"
+                    ? "category name"
+                    : "question text"
+                }...`}
+              />
             </Form.Item>
           </Form>
         </Modal>
 
         <Modal
           title={`${editingItem?.id ? "Edit" : "Add New"} ${
-            currentModalType === "triggers" ? "Trigger" : "Strategy"
+            currentModalType === "triggers" ? "Trigger" : "Answer"
           }`}
           open={isItemModalVisible}
           onCancel={() => {
@@ -678,17 +873,98 @@ function PlanManagement() {
             </Button>,
             <Button key="submit" type="primary" onClick={handleItemSubmit}>
               {editingItem?.id ? "Update" : "Add"}{" "}
-              {currentModalType === "triggers" ? "Trigger" : "Strategy"}
+              {currentModalType === "triggers" ? "Trigger" : "Answer"}
             </Button>,
           ]}
         >
           <Form form={itemForm} layout="vertical">
             <Form.Item
               name="title"
-              label="Title"
-              rules={[{ required: true, message: "Please enter title" }]}
+              label={
+                currentModalType === "triggers" ? "Trigger Name" : "Answer Text"
+              }
+              rules={[
+                {
+                  required: true,
+                  message: `Please enter ${
+                    currentModalType === "triggers"
+                      ? "trigger name"
+                      : "answer text"
+                  }`,
+                },
+              ]}
             >
-              <Input placeholder="Enter title..." />
+              <Input
+                placeholder={`Enter ${
+                  currentModalType === "triggers"
+                    ? "trigger name"
+                    : "answer text"
+                }...`}
+              />
+            </Form.Item>
+            {currentModalType === "questions" && (
+              <Form.Item
+                name="points"
+                label="Points"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter points for this answer",
+                  },
+                ]}
+              >
+                <Input
+                  type="number"
+                  placeholder="Enter points (e.g. 0, 1, 2, 3)..."
+                />
+              </Form.Item>
+            )}
+          </Form>
+        </Modal>
+
+        <Modal
+          title={
+            editingSupportMeasure
+              ? "Edit Support Measure"
+              : "Add New Support Measure"
+          }
+          open={isSupportMeasureModalVisible}
+          onCancel={() => {
+            setIsSupportMeasureModalVisible(false);
+            setEditingSupportMeasure(null);
+            supportMeasureForm.resetFields();
+          }}
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => {
+                setIsSupportMeasureModalVisible(false);
+                setEditingSupportMeasure(null);
+                supportMeasureForm.resetFields();
+              }}
+            >
+              Cancel
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleSupportMeasureSubmit}
+            >
+              {editingSupportMeasure
+                ? "Update Support Measure"
+                : "Add Support Measure"}
+            </Button>,
+          ]}
+        >
+          <Form form={supportMeasureForm} layout="vertical">
+            <Form.Item
+              name="title"
+              label="Support Measure"
+              rules={[
+                { required: true, message: "Please enter support measure" },
+              ]}
+            >
+              <Input placeholder="Enter support measure..." />
             </Form.Item>
           </Form>
         </Modal>

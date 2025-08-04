@@ -56,7 +56,6 @@ function UserBookings() {
     return timeRanges[slotNumber] || "";
   };
 
-  // Function to format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const options = {
@@ -68,7 +67,6 @@ function UserBookings() {
     return date.toLocaleDateString("en-US", options);
   };
 
-  // Function to filter bookings by status
   const filterBookings = (status) => {
     setActiveFilter(status);
     const filtered = bookings.filter((booking) => booking.status === status);
@@ -367,7 +365,6 @@ function UserBookings() {
                         </p>
                       </div>
 
-                      {/* Show meeting link for scheduled bookings only if available */}
                       {booking.status === "scheduled" &&
                         booking.meetingLink && (
                           <div className="wrapper__profile-bookings-card-meeting">

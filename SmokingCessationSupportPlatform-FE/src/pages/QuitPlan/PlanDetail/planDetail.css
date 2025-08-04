@@ -50,6 +50,41 @@
     font-weight: 600;
 }
 
+.wrapper__content-detail-assessment-score {
+    margin-bottom: 24px;
+}
+
+.wrapper__content-detail-assessment-score h3 {
+    margin-bottom: 16px;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.wrapper__content-detail-assessment-progress {
+    margin-bottom: 16px;
+}
+
+.wrapper__content-detail-assessment-level {
+    margin-bottom: 20px;
+}
+
+.wrapper__content-detail-assessment-badge {
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.wrapper__content-detail-assessment-alert {
+    margin-top: 16px;
+}
+
 .wrapper__content-detail-saving-title-icon {
     font-size: 24px;
     color: #1890ff;

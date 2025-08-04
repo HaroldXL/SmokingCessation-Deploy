@@ -42,17 +42,29 @@ function MyAccountNav() {
         Bookings
       </Link>
       <Link
-        to="/user-profile/membership"
-        className={isActivePage("/user-profile/membership") ? "active" : ""}
+        to="/user-profile/free-task"
+        className={isActivePage("/user-profile/free-task") ? "active" : ""}
       >
-        Membership
+        Free Task
       </Link>
 
+      <Link
+        to="/user-profile/pro-task"
+        className={isActivePage("/user-profile/pro-task") ? "active" : ""}
+      >
+        Pro Task
+      </Link>
       <Link
         to="/user-profile/badges"
         className={isActivePage("/user-profile/badges") ? "active" : ""}
       >
         Badges
+      </Link>
+      <Link
+        to="/user-profile/membership"
+        className={isActivePage("/user-profile/membership") ? "active" : ""}
+      >
+        Membership
       </Link>
 
       <Popconfirm

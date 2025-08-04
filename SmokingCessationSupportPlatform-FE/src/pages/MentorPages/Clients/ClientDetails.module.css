@@ -170,24 +170,22 @@
     line-height: 1.6;
   }
   
-  /* New sections for reasons, triggers, and strategies */
+  /* New sections for reasons, triggers, questions */
   .reasonsSection,
   .triggersSection,
-  .strategiesSection {
+  .questionsSection {
     padding: 16px 0;
   }
   
   .reasonsList,
-  .triggersList,
-  .strategiesList {
+  .triggersList {
     list-style: none;
     padding: 0;
     margin: 0;
   }
   
   .reasonItem,
-  .triggerItem,
-  .strategyItem {
+  .triggerItem {
     padding: 12px 16px;
     margin-bottom: 8px;
     background-color: #f8fafc;
@@ -201,13 +199,8 @@
     border-left-color: #ff4d4f;
   }
   
-  .strategyItem {
-    border-left-color: #52c41a;
-  }
-  
   .reasonItem:last-child,
-  .triggerItem:last-child,
-  .strategyItem:last-child {
+  .triggerItem:last-child {
     margin-bottom: 0;
   }
   
@@ -395,4 +388,677 @@
 .smokingHistoryCard .ant-card-head-title {
   font-weight: 600;
   color: #262626;
+}
+
+/* Loading and Error States */
+.loadingContainer {
+  text-align: center;
+  padding: 100px 0;
+}
+
+.loadingText {
+  margin-top: 16px;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 100px 0;
+}
+
+.errorBackButton {
+  margin-top: 16px;
+}
+
+.notFoundContainer {
+  padding: 24px;
+  text-align: center;
+}
+
+/* Client Header Styles */
+.clientAvatarContainer {
+  text-align: center;
+}
+
+.clientAvatarImage {
+  border: 4px solid #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.clientInfoContainer {
+  padding-left: 16px;
+}
+
+.clientInfoSection {
+  margin-bottom: 16px;
+}
+
+.clientMainTitle {
+  margin-bottom: 0;
+  font-size: 32px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.clientProfileName {
+  font-size: 18px;
+  color: #8c8c8c;
+  font-style: italic;
+  margin-top: 4px;
+  display: block;
+}
+
+.clientEmailText {
+  font-size: 16px;
+  color: #666;
+}
+
+.clientMetaContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.clientStatusTag {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.clientDetailsRow {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.clientDetailItem {
+  display: flex;
+  align-items: center;
+}
+
+.clientDetailLabel {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin-right: 6px;
+}
+
+.clientDetailValue {
+  font-size: 14px;
+  font-weight: 500;
+  color: #595959;
+}
+
+/* Stats and Overview Cards */
+.overviewStatCard {
+  background-color: #F5F8FA;
+}
+
+.consultationHistoryLink {
+  margin-top: 8px;
+  padding: 0;
+  height: auto;
+  color: #722ed1;
+}
+
+.badgeStatDescription {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+/* Achievements Section */
+.achievementsCard {
+  min-height: 250px;
+  background-color: #F5F8FA;
+}
+
+.achievementsHeader {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.achievementsIcon {
+  font-size: 32px;
+  color: #faad14;
+  margin-bottom: 12px;
+}
+
+.achievementsTitle {
+  margin: 0;
+  color: #faad14;
+}
+
+.achievementsSubtitle {
+  font-size: 14px;
+  display: block;
+  margin-top: 8px;
+}
+
+.achievementsContainer {
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 0 16px;
+}
+
+.achievementsRow {
+  display: flex;
+  gap: 20px;
+  padding-bottom: 16px;
+  min-width: 100%;
+}
+
+.achievementsRowCentered {
+  justify-content: center;
+}
+
+.achievementsRowStart {
+  justify-content: flex-start;
+}
+
+.achievementCard {
+  min-width: 200px;
+  flex-shrink: 0;
+  text-align: center;
+  padding: 20px;
+  background-color: white;
+  border: 2px solid #f0f0f0;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.achievementCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.achievementImageContainer {
+  margin-bottom: 16px;
+}
+
+.achievementImage {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.achievementImagePlaceholder {
+  width: 120px;
+  height: 120px;
+  background-color: #458FF6;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.achievementImageIcon {
+  font-size: 50px;
+  color: white;
+}
+
+.achievementName {
+  font-size: 18px;
+  color: #458FF6;
+  display: block;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.achievementDate {
+  font-size: 14px;
+  color: #8c8c8c;
+  display: block;
+}
+
+.noAchievements {
+  text-align: center;
+  padding: 60px 0;
+  color: #8c8c8c;
+}
+
+.noAchievementsIcon {
+  font-size: 64px;
+  color: #d9d9d9;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.noAchievementsTitle {
+  color: #8c8c8c;
+  margin-bottom: 8px;
+}
+
+.noAchievementsText {
+  font-size: 14px;
+}
+
+/* Questions Section */
+.questionCard {
+  margin-bottom: 0;
+  padding: 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background-color: #fafafa;
+  height: 100%;
+}
+
+.questionTitle {
+  color: #1890ff;
+  margin-bottom: 12px;
+}
+
+.questionAnswersContainer {
+  padding-left: 16px;
+}
+
+.questionAnswer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.questionAnswerSelected {
+  background-color: #e6f7ff;
+  border: 2px solid #1890ff;
+}
+
+.questionAnswerDefault {
+  background-color: white;
+}
+
+.questionAnswerIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1890ff;
+  margin-right: 8px;
+}
+
+.questionAnswerTextSelected {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.questionAnswerTextDefault {
+  color: #595959;
+  font-weight: 400;
+}
+
+.questionAnswerPoints {
+  color: #52c41a;
+  margin-left: 8px;
+}
+
+/* Progress Tab Styles */
+.progressStatCard {
+  background-color: #F5F8FA;
+}
+
+.progressStatText {
+  font-size: 12px;
+}
+
+.cravingContainer {
+  text-align: center;
+}
+
+.cravingTitle {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin-bottom: 8px;
+}
+
+.cravingValue {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.statusInfoContainer {
+  padding: 16px 0;
+}
+
+.statusInfoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statusTag {
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.smokingHabitsContainer {
+  padding: 16px 0;
+}
+
+.smokingHabitsItem {
+  text-align: center;
+}
+
+.smokingHabitsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.smokingHabitsIcon {
+  color: #ff4d4f;
+  font-size: 20px;
+}
+
+.smokingHabitsTitle {
+  font-size: 16px;
+}
+
+.smokingHabitsValue {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff4d4f;
+}
+
+.smokingHabitsSubtitle {
+  font-size: 14px;
+}
+
+.smokingHabitsSubvalue {
+  font-size: 18px;
+  color: #8c8c8c;
+}
+
+/* Smoking History */
+.smokingHistoryDateHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.smokingHistoryDateIcon {
+  color: #1890ff;
+  margin-right: 8px;
+}
+
+.smokingHistoryDateTitle {
+  margin: 0;
+}
+
+.smokingHistoryEventItem {
+  padding: 12px 16px;
+  margin: 8px 0;
+  background-color: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.smokingHistoryEventAvatar {
+  background-color: #ff4d4f;
+}
+
+.smokingHistoryEventTag {
+  font-weight: 500;
+}
+
+.smokingHistoryEventTime {
+  margin-right: 4px;
+}
+
+.smokingHistoryEventNote {
+  color: #595959;
+}
+
+.noSmokingHistory {
+  text-align: center;
+  padding: 40px 0;
+  color: #8c8c8c;
+}
+
+.noSmokingHistoryIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #d9d9d9;
+}
+
+.noSmokingHistoryTitle {
+  color: #8c8c8c;
+  margin-bottom: 8px;
+}
+
+/* Modal Styles */
+.modalHeader {
+  display: flex;
+  align-items: center;
+}
+
+.modalHeaderIcon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.modalHeaderTitle {
+  font-size: 16px;
+}
+
+.consultationInfoCard {
+  margin-bottom: 20px;
+}
+
+.consultationInfoHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.consultationInfoIcon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.consultationInfoTitle {
+  margin: 0;
+}
+
+.consultationInfoItem {
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.consultationInfoLabel {
+  color: #8c8c8c;
+  font-size: 12px;
+  display: block;
+}
+
+.ratingFeedbackCard {
+  margin-bottom: 20px;
+}
+
+.ratingFeedbackHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ratingFeedbackIcon {
+  margin-right: 8px;
+  color: #faad14;
+}
+
+.ratingFeedbackTitle {
+  margin: 0;
+}
+
+.ratingContainer {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.ratingValue {
+  margin-left: 8px;
+  color: #faad14;
+}
+
+.feedbackContainer {
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.feedbackLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+.notesCard {
+  margin-bottom: 20px;
+}
+
+.notesHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.notesIcon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.notesTitle {
+  margin: 0;
+}
+
+.notesContent {
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 4px;
+  min-height: 100px;
+}
+
+/* Task Management Styles */
+.taskCard {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.taskCard:hover {
+  border-color: #d9d9d9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.taskCard .ant-card-actions {
+  border-top: 1px solid #f0f0f0;
+  background-color: #fafafa;
+}
+
+.taskCard .ant-card-actions > li > span {
+  padding: 8px 12px;
+}
+
+.taskCard .ant-card-body {
+  padding: 16px;
+}
+
+.taskSupportMeasuresContainer {
+  background-color: #f6f8fa;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+}
+
+.taskSupportMeasuresText {
+  font-style: italic;
+  color: #7D7987;
+  margin: 0;
+  font-size: 16px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.taskManagementContainer {
+  padding: 16px 0;
+}
+
+.taskManagementHeader {
+  margin-bottom: 24px;
+}
+
+.taskManagementHeaderContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.taskLoadingContainer {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.taskLoadingText {
+  margin-top: 16px;
+}
+
+.taskDateHeader {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.taskDateText {
+  font-size: 16px;
+}
+
+.taskSupportMeasuresWrapper {
+  margin-bottom: 12px;
+}
+
+.taskTargetWrapper {
+  margin-bottom: 8px;
+}
+
+.taskTargetText {
+  font-size: 14px;
+}
+
+.noTasksContainer {
+  text-align: center;
+  padding: 60px 0;
+  color: #8c8c8c;
+}
+
+.noTasksIcon {
+  font-size: 64px;
+  color: #d9d9d9;
+  margin-bottom: 16px;
+}
+
+.noTasksTitle {
+  color: #8c8c8c;
+  margin-bottom: 8px;
 }

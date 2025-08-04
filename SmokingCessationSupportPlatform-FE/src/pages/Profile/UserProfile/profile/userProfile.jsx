@@ -44,7 +44,6 @@ function UserProfile() {
   // Ref cho input file ẩn
   const fileInputRef = useRef(null);
 
-  // State để quản lý trạng thái enable/disable của từng field
   const [fieldStates, setFieldStates] = useState({
     fullName: true,
     profileName: true,
@@ -147,10 +146,8 @@ function UserProfile() {
   };
 
   const handleCancel = () => {
-    // Reset form về giá trị gốc
     form.setFieldsValue(originalValues);
 
-    // Reset tất cả field về trạng thái disabled
     setFieldStates({
       fullName: true,
       profileName: true,
@@ -158,7 +155,6 @@ function UserProfile() {
       gender: true,
     });
 
-    // Clear edited fields
     setEditedFields(new Set());
   };
 

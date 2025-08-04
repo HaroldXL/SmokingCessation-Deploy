@@ -11,6 +11,8 @@ import {
   Slider,
   Card,
   Rate,
+  Progress,
+  Alert,
 } from "antd";
 import { ExclamationCircleFilled } from "@ant-design/icons";
 const { confirm } = Modal;
@@ -38,7 +40,7 @@ function PlanDetail() {
   const [healthMetrics, setHealthMetrics] = useState(null);
   const [userReasons, setUserReasons] = useState([]);
   const [userTriggers, setUserTriggers] = useState([]);
-  const [userStrategies, setUserStrategies] = useState([]);
+  const [addictionAssessment, setAddictionAssessment] = useState(null);
   const [smokingEvents, setSmokingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSmokeModal, setShowSmokeModal] = useState(false);
@@ -98,17 +100,6 @@ function PlanDetail() {
       }
     };
 
-    const fetchUserStrategies = async () => {
-      try {
-        const response = await api.get("/user-strategies/my");
-        if (response.data && response.data.length > 0) {
-          setUserStrategies(response.data[0].strategyCategories);
-        }
-      } catch (error) {
-        console.error("Error fetching user strategies:", error);
-      }
-    };
-
     const fetchSmokingEvents = async () => {
       try {
         const response = await api.get("/smoking-events/my");
@@ -118,13 +109,24 @@ function PlanDetail() {
       }
     };
 
+    const fetchAddictionAssessment = async () => {
+      try {
+        const response = await api.get(
+          `/question-answer/scores/${user.userId}`
+        );
+        setAddictionAssessment(response.data);
+      } catch (error) {
+        console.error("Error fetching addiction assessment:", error);
+      }
+    };
+
     fetchUserProfile();
     fetchSavingData();
     fetchHealthMetrics();
     fetchUserReasons();
     fetchUserTriggers();
-    fetchUserStrategies();
     fetchSmokingEvents();
+    fetchAddictionAssessment();
   }, [user.userId]);
 
   const fetchSavingData = async () => {
@@ -181,12 +183,11 @@ function PlanDetail() {
 
   const handleDeletePlan = async () => {
     try {
-      // Delete all related data
       const deletePromises = [
         api.delete(`/user-smoking-profile/${userProfile.profileId}`),
         api.delete(`/reasons/delete/${user.userId}`),
         api.delete(`/user-triggers/delete/${user.userId}`),
-        api.delete(`/user-strategies/delete/${user.userId}`),
+        api.delete(`/question-answer/responses/all?userId=${user.userId}`),
       ];
 
       await Promise.all(deletePromises);
@@ -212,6 +213,99 @@ function PlanDetail() {
       minute: "2-digit",
     };
     return date.toLocaleDateString("en-US", options);
+  };
+
+  const getDependencyLevelInfo = (level) => {
+    const levelInfo = {
+      very_low: {
+        text: "Very Low Dependency",
+        color: "#52c41a",
+        gradient: { from: "#52c41a", to: "#73d13d" },
+        description:
+          "Based on your responses, you show minimal signs of nicotine dependence.",
+      },
+      low: {
+        text: "Low Dependency",
+        color: "#73d13d",
+        gradient: { from: "#73d13d", to: "#95de64" },
+        description:
+          "Your assessment indicates low nicotine dependence with good chances of successful quitting.",
+      },
+      medium: {
+        text: "Medium Dependency",
+        color: "#faad14",
+        gradient: { from: "#fadb14", to: "#faad14" },
+        description:
+          "Your responses suggest moderate nicotine dependence. Planning and support will be helpful.",
+      },
+      high: {
+        text: "High Dependency",
+        color: "#ff7a45",
+        gradient: { from: "#ff7a45", to: "#ff4d4f" },
+        description:
+          "Your assessment shows high nicotine dependence. Professional support is recommended.",
+      },
+      very_high: {
+        text: "Very High Dependency",
+        color: "#ff4d4f",
+        gradient: { from: "#ff4d4f", to: "#cf1322" },
+        description:
+          "Your responses indicate very high nicotine dependence. Medical assistance may be beneficial.",
+      },
+    };
+    return levelInfo[level] || levelInfo.medium;
+  };
+
+  const getRecommendation = (dependencyLevel) => {
+    if (dependencyLevel === "very_low" || dependencyLevel === "low") {
+      return {
+        type: "success",
+        title: "Excellent Assessment Result!",
+        message:
+          "Your assessment shows minimal nicotine dependence. This is a great foundation for quitting smoking successfully. Consider starting your quit journey soon!",
+      };
+    } else if (dependencyLevel === "medium") {
+      return {
+        type: "info",
+        title: "Moderate Dependency Detected",
+        message:
+          "Your assessment indicates moderate nicotine dependence. With proper planning and support, you can successfully quit smoking. Consider preparing a comprehensive quit plan.",
+      };
+    } else {
+      // high or very_high
+      const baseMessage =
+        "Your assessment shows significant nicotine dependence. ";
+      if (!user.hasActive) {
+        return {
+          type: "warning",
+          title: "Professional Support Highly Recommended",
+          message:
+            baseMessage +
+            "Quitting may be challenging on your own. Consider upgrading to our Pro plan for personalized coaching and medical support to increase your success rate.",
+          action: (
+            <Button
+              type="primary"
+              onClick={() => navigate("/user-profile/membership")}
+            >
+              Upgrade to Pro
+            </Button>
+          ),
+        };
+      } else {
+        return {
+          type: "warning",
+          title: "Additional Support May Be Needed",
+          message:
+            baseMessage +
+            "Your current quit plan is good, but you may benefit from additional professional support, nicotine replacement therapy, or counseling sessions.",
+          action: (
+            <Button type="primary" onClick={() => navigate("/user-coach")}>
+              Find a Coach
+            </Button>
+          ),
+        };
+      }
+    }
   };
 
   const handleFinishFailed = () => {
@@ -329,6 +423,91 @@ function PlanDetail() {
               </div>
             </div>
           </div>
+
+          <div className="wrapper__content-detail">
+            <h2 className="wrapper__content-detail-title">
+              Addiction Assessment
+            </h2>
+            <p className="wrapper__content-detail-des">
+              Understanding your level of nicotine dependence helps tailor your
+              quit plan and provides insights into the support you may need
+              during your journey.
+            </p>
+
+            {addictionAssessment ? (
+              <>
+                <div className="wrapper__content-detail-assessment">
+                  <div className="wrapper__content-detail-assessment-score">
+                    <h3>Your Addiction Score</h3>
+                    <div className="wrapper__content-detail-assessment-progress">
+                      <Progress
+                        percent={(addictionAssessment.totalScore / 10) * 100}
+                        strokeColor={{
+                          from: getDependencyLevelInfo(
+                            addictionAssessment.dependencyLevel
+                          ).gradient.from,
+                          to: getDependencyLevelInfo(
+                            addictionAssessment.dependencyLevel
+                          ).gradient.to,
+                        }}
+                        trailColor="#f0f0f0"
+                        strokeWidth={12}
+                        format={() => `${addictionAssessment.totalScore}/10`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="wrapper__content-detail-assessment-level">
+                    <div
+                      className="wrapper__content-detail-assessment-badge"
+                      style={{
+                        backgroundColor: getDependencyLevelInfo(
+                          addictionAssessment.dependencyLevel
+                        ).color,
+                      }}
+                    >
+                      {
+                        getDependencyLevelInfo(
+                          addictionAssessment.dependencyLevel
+                        ).text
+                      }
+                    </div>
+                    <p>
+                      {
+                        getDependencyLevelInfo(
+                          addictionAssessment.dependencyLevel
+                        ).description
+                      }
+                    </p>
+                  </div>
+
+                  <Alert
+                    className="wrapper__content-detail-assessment-alert"
+                    message={
+                      getRecommendation(addictionAssessment.dependencyLevel)
+                        .title
+                    }
+                    description={
+                      getRecommendation(addictionAssessment.dependencyLevel)
+                        .message
+                    }
+                    type={
+                      getRecommendation(addictionAssessment.dependencyLevel)
+                        .type
+                    }
+                    action={
+                      getRecommendation(addictionAssessment.dependencyLevel)
+                        .action
+                    }
+                    showIcon
+                  />
+                </div>
+              </>
+            ) : (
+              <p>Loading addiction assessment...</p>
+            )}
+          </div>
+
           <div className="wrapper__content-detail">
             <h2 className="wrapper__content-detail-title">Overall Progress</h2>
             <p className="wrapper__content-detail-des">
@@ -479,34 +658,6 @@ function PlanDetail() {
                 <ul className="wrapper__content-detail-triggers-list">
                   {category.triggers.map((trigger) => (
                     <li key={trigger.triggerId}>- {trigger.name}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="wrapper__content-detail">
-            <h2 className="wrapper__content-detail-title">
-              Plan for Your Cravings
-            </h2>
-            <p className="wrapper__content-detail-des">
-              Cravings are temporary and will fade over time the longer you stay
-              quit. When a craving hits, find something else to do instead of
-              smoking. It will pass. The important thing is to keep trying
-              different things until you find what works for you
-            </p>
-            <h3>My craving strategies :</h3>
-            {userStrategies.map((category) => (
-              <div
-                key={category.categoryId}
-                className="wrapper__content-detail-triggers"
-              >
-                <h3 className="wrapper__content-detail-triggers-title">
-                  {category.name}
-                </h3>
-                <ul className="wrapper__content-detail-triggers-list">
-                  {category.strategies.map((strategy) => (
-                    <li key={strategy.strategyId}>- {strategy.name}</li>
                   ))}
                 </ul>
               </div>

@@ -1,5 +1,6 @@
 .wrapper__profile-badges-description {
   font-weight: lighter;
+  line-height: 1.5;
 }
 
 .wrapper__profile-badges-list {
@@ -30,7 +31,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: 50px;
   width: 100%;
 }
 

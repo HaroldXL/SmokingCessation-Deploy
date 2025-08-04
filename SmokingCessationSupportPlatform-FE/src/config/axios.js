@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://smokingcessationsupport.space/api/", 
+    // baseURL: "https://smokingcessationsupport.space/api/", 
+    baseURL: "http://localhost:8080/api/", 
 });
 
 const handleBefore = (config) => {

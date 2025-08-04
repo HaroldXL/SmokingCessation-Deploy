@@ -124,83 +124,133 @@ export const triggerService = {
   },
 };
 
-export const strategyService = {
-  getAllStrategyCategories: async () => {
+export const questionService = {
+  getAllQuestions: async () => {
     try {
-      const response = await api.get("/strategies/categories");
+      const response = await api.get("/admin/questions");
       return response.data;
     } catch (error) {
-      console.error("Error fetching strategy categories:", error);
+      console.error("Error fetching questions:", error);
       throw error;
     }
   },
 
-  createStrategyCategory: async (categoryData) => {
+  getQuestionAnswers: async (questionId) => {
     try {
-      const response = await api.post("/admin/strategy-categories", categoryData);
+      const response = await api.get(`/admin/questions/${questionId}/answers`);
       return response.data;
     } catch (error) {
-      console.error("Error creating strategy category:", error);
+      console.error("Error fetching question answers:", error);
       throw error;
     }
   },
 
-  updateStrategyCategory: async (categoryId, categoryData) => {
+  createQuestion: async (questionData) => {
     try {
-      const response = await api.put(`/admin/strategy-categories/${categoryId}`, categoryData);
-      return response.data;
-    } catch (error) {
-      console.error("Error updating strategy category:", error);
-      throw error;
-    }
-  },
-
-  deleteStrategyCategory: async (categoryId) => {
-    try {
-      const response = await api.delete(`/admin/strategy-categories/${categoryId}`);
-      return response.data;
-    } catch (error) {
-      console.error("Error deleting strategy category:", error);
-      throw error;
-    }
-  },
-
-  createStrategy: async (strategyData) => {
-    try {
-      const response = await api.post(`/admin/strategies`, null, {
+      const response = await api.post("/admin/questions", null, {
         params: {
-          name: strategyData.name,
-          categoryId: strategyData.categoryId
+          questionText: questionData.questionText
         }
       });
       return response.data;
     } catch (error) {
-      console.error("Error creating strategy:", error);
+      console.error("Error creating question:", error);
       throw error;
     }
   },
 
-    updateStrategy: async (strategyId, strategyData) => {
+  updateQuestion: async (questionId, questionData) => {
     try {
-      const response = await api.put(`/admin/strategies/${strategyId}`, null, {
+      const response = await api.put(`/admin/questions/${questionId}`, null, {
         params: {
-          name: strategyData.name,
-          categoryId: strategyData.categoryId
+          newText: questionData.questionText
         }
       });
       return response.data;
     } catch (error) {
-      console.error("Error updating strategy:", error);
+      console.error("Error updating question:", error);
       throw error;
     }
   },
 
-  deleteStrategy: async (strategyId) => {
+  deleteQuestion: async (questionId) => {
     try {
-      const response = await api.delete(`/admin/strategies/${strategyId}`);
+      const response = await api.delete(`/admin/questions/${questionId}`);
       return response.data;
     } catch (error) {
-      console.error("Error deleting strategy:", error);
+      console.error("Error deleting question:", error);
+      throw error;
+    }
+  },
+
+  createAnswer: async (questionId, answerData) => {
+    try {
+      const response = await api.post(`/admin/questions/${questionId}/answers`, answerData);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating answer:", error);
+      throw error;
+    }
+  },
+
+  updateAnswer: async (answerId, answerData) => {
+    try {
+      const response = await api.put(`/admin/answers/${answerId}`, answerData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating answer:", error);
+      throw error;
+    }
+  },
+
+  deleteAnswer: async (answerId) => {
+    try {
+      const response = await api.delete(`/admin/answers/${answerId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting answer:", error);
+      throw error;
+    }
+  },
+};
+
+export const supportMeasureService = {
+  getAllSupportMeasures: async () => {
+    try {
+      const response = await api.get("/support-measures");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching support measures:", error);
+      throw error;
+    }
+  },
+
+  createSupportMeasure: async (supportMeasureData) => {
+    try {
+      const response = await api.post("/support-measures", supportMeasureData);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating support measure:", error);
+      throw error;
+    }
+  },
+
+  updateSupportMeasure: async (supportMeasureId, supportMeasureData) => {
+    try {
+      const response = await api.put(`/support-measures/${supportMeasureId}`, supportMeasureData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating support measure:", error);
+      throw error;
+    }
+  },
+
+  deleteSupportMeasure: async (supportMeasureId) => {
+    try {
+      const response = await api.delete(`/support-measures/${supportMeasureId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting support measure:", error);
       throw error;
     }
   },

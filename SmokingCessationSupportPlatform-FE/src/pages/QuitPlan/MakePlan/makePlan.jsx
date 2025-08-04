@@ -30,10 +30,10 @@ function MakePlan() {
   const [form] = Form.useForm();
   const [selectedRadio, setSelectedRadio] = useState(1);
   const [triggerCategories, setTriggerCategories] = useState([]);
-  const [strategyCategories, setStrategyCategories] = useState([]);
+  const [addictionQuestions, setAddictionQuestions] = useState([]);
   const [reasons, setReasons] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [strategiesLoading, setStrategiesLoading] = useState(true);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
   const [reasonsLoading, setReasonsLoading] = useState(true);
   const currentDateTime = dayjs();
 
@@ -67,10 +67,22 @@ function MakePlan() {
         quitDate: values.quitDate.format("YYYY-MM-DD"),
       };
 
+      const questionAnswerPromises = [];
+      addictionQuestions.forEach((question) => {
+        const answerValue = values[`question_${question.questionId}`];
+        if (answerValue) {
+          questionAnswerPromises.push(
+            api.post(
+              `/question-answer/answer?questionId=${question.questionId}&answerId=${answerValue}`
+            )
+          );
+        }
+      });
+
       await Promise.all([
         api.post("/user-smoking-profile/my", smokingProfileData),
         api.post("/user-triggers/bulk", values.selectedTriggers || []),
-        api.post("/user-strategies/bulk", values.selectedStrategies || []),
+        ...questionAnswerPromises,
         api.post("/reasons/user-reasons", values.selectedReasons || []),
       ]);
 
@@ -94,15 +106,15 @@ function MakePlan() {
   };
 
   useEffect(() => {
-    const fetchStrategyCategories = async () => {
+    const fetchAddictionQuestions = async () => {
       try {
-        setStrategiesLoading(true);
-        const response = await api.get("strategies/categories");
-        setStrategyCategories(response.data);
+        setQuestionsLoading(true);
+        const response = await api.get("question-answer/public");
+        setAddictionQuestions(response.data);
       } catch (error) {
-        console.error("Error fetching strategy categories:", error);
+        console.error("Error fetching addiction questions:", error);
       } finally {
-        setStrategiesLoading(false);
+        setQuestionsLoading(false);
       }
     };
 
@@ -131,7 +143,7 @@ function MakePlan() {
       }
     };
 
-    fetchStrategyCategories();
+    fetchAddictionQuestions();
     fetchReasons();
     fetchTriggerCategories();
   }, []);
@@ -203,7 +215,6 @@ function MakePlan() {
                     needConfirm
                     disabled={selectedRadio === 1}
                     disabledDate={(current) => {
-                      // Disable dates before today
                       return current && current < dayjs().startOf("day");
                     }}
                   />
@@ -247,8 +258,9 @@ function MakePlan() {
                       className="wrapper__content-step-cost-input"
                       min={0}
                       variant="filled"
+                      suffix="VND"
                       formatter={(value) =>
-                        `VND ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                       parser={(value) =>
                         value === null || value === void 0
@@ -362,49 +374,54 @@ function MakePlan() {
             <div className="wrapper__content-step">
               <h1>Step 5</h1>
               <h2 className="wrapper__content-step-title">
-                Set Yourself Up for Success
+                Your Addiction Level
               </h2>
               <p>
-                Choose strategies and tools to help you quit. When preparing to
-                quit, set yourself up for success by thinking about who in your
-                life you will reach out to for support, how you will get expert
-                help, and how you will distract yourself when you have the urge
-                to smoke. This will keep you on track and boost your chances of
-                quitting for good.
+                Answer the following questions to help us assess your nicotine
+                addiction level. This information will help us create a more
+                personalized quit plan that suits your needs and increases your
+                chances of successfully quitting smoking.
               </p>
               <div className="wrapper__content-step-triggers">
-                {strategiesLoading ? (
+                {questionsLoading ? (
                   <Skeleton active />
                 ) : (
-                  <Form.Item
-                    name="selectedStrategies"
-                    rules={[{ required: true, message: "Success strategies" }]}
-                  >
-                    <Checkbox.Group>
-                      {strategyCategories
-                        .filter((category) => category.strategies.length > 0)
-                        .map((category) => (
-                          <Card
-                            key={category.categoryId}
-                            size="small"
-                            className="wrapper__content-step-triggers-card"
+                  <div className="wrapper__content-step-triggers questionnaire">
+                    {addictionQuestions.map((question) => (
+                      <Card
+                        key={question.questionId}
+                        size="large"
+                        className="wrapper__content-step-triggers-card wrapper__content-step-triggers-card-question"
+                      >
+                        <h3 className="wrapper__content-step-triggers-card-title">
+                          {question.questionText}
+                        </h3>
+                        <div className="wrapper__content-step-triggers-card-content">
+                          <Form.Item
+                            name={`question_${question.questionId}`}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select an answer",
+                              },
+                            ]}
                           >
-                            <h2>{category.name}</h2>
-                            <div className="wrapper__content-step-triggers-card-content">
-                              {category.strategies.map((strategy) => (
-                                <Checkbox
-                                  key={strategy.strategyId}
+                            <Radio.Group>
+                              {question.answers.map((answer) => (
+                                <Radio
+                                  key={answer.answerId}
                                   className="wrapper__content-step-reason-checkbox"
-                                  value={strategy.strategyId}
+                                  value={answer.answerId}
                                 >
-                                  {strategy.name}
-                                </Checkbox>
+                                  {answer.answerText}
+                                </Radio>
                               ))}
-                            </div>
-                          </Card>
-                        ))}
-                    </Checkbox.Group>
-                  </Form.Item>
+                            </Radio.Group>
+                          </Form.Item>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

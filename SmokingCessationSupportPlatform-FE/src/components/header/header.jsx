@@ -1,12 +1,23 @@
-import { Button, Avatar } from "antd";
+import { Button, Avatar, Badge, Tooltip } from "antd";
 import "./header.css";
-import { BellOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  BellOutlined,
+  BellTwoTone,
+  ContainerTwoTone,
+  CrownOutlined,
+  ProfileTwoTone,
+  ScheduleTwoTone,
+  UserOutlined,
+} from "@ant-design/icons";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useState, useEffect } from "react";
+import api from "../../config/axios";
 
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const user = useSelector((store) => store.user);
 
@@ -16,6 +27,21 @@ function Header() {
     }
     return location.pathname.includes(path);
   };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await api.get("/notifications/unread-count");
+      setUnreadCount(response.data || 0);
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.userId) {
+      fetchUnreadCount();
+    }
+  }, [user?.userId]);
 
   return (
     <>
@@ -56,10 +82,37 @@ function Header() {
             </nav>
           </div>
           <div className="header__login-register">
-            {/* <SearchOutlined className="search" />
-            <BellOutlined className="noti" /> */}
+            {/* <SearchOutlined className="search" /> */}
+
             {user ? (
               <div className="user-info">
+                <Tooltip title="Bookings">
+                  <ScheduleTwoTone
+                    className="noti"
+                    onClick={() => navigate("/user-profile/bookings")}
+                  />
+                </Tooltip>
+
+                <Tooltip title="Pro Tasks">
+                  <ContainerTwoTone
+                    className="noti"
+                    onClick={() => navigate("/user-profile/pro-task")}
+                  />
+                </Tooltip>
+
+                <Tooltip title="Free Tasks">
+                  <ProfileTwoTone
+                    className="noti"
+                    onClick={() => navigate("/user-profile/free-task")}
+                  />
+                </Tooltip>
+
+                <Badge className="noti" count={unreadCount} size="small">
+                  <Tooltip title="Notifications">
+                    <BellTwoTone onClick={() => navigate("/notifications")} />
+                  </Tooltip>
+                </Badge>
+
                 {user.avatarUrl ? (
                   <Avatar
                     onClick={() => navigate("/user-profile")}

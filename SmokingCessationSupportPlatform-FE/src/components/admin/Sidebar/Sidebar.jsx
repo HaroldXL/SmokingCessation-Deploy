@@ -60,6 +60,7 @@ const Sidebar = () => {
                 User Management
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/admin/blog-management"
@@ -71,6 +72,20 @@ const Sidebar = () => {
               >
                 <ReadOutlined className="sidebar__icon" />
                 Blog Management
+              </NavLink>
+            </li>
+
+            <li>
+              <NavLink
+                to="/admin/schedule-management"
+                className={({ isActive }) =>
+                  isActive
+                    ? "sidebar__menu-item sidebar__menu-item--active"
+                    : "sidebar__menu-item"
+                }
+              >
+                <CalendarOutlined className="sidebar__icon" />
+                Schedule Management
               </NavLink>
             </li>
             {/* <li>
@@ -112,19 +127,7 @@ const Sidebar = () => {
                 Badge Management
               </NavLink>
             </li>
-            <li>
-              <NavLink
-                to="/admin/schedule-management"
-                className={({ isActive }) =>
-                  isActive
-                    ? "sidebar__menu-item sidebar__menu-item--active"
-                    : "sidebar__menu-item"
-                }
-              >
-                <CalendarOutlined className="sidebar__icon" />
-                Schedule Management
-              </NavLink>
-            </li>
+
             {/* <li>
               <NavLink
                 to="/admin/membership-payment"
