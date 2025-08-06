@@ -190,7 +190,7 @@ const EditPostModal = ({ post, isOpen, onClose, onSave }) => {
           </Upload>
         </Form.Item>
 
-        <Form.Item label="Status" name="status" valuePropName="checked">
+        <Form.Item label="Status" name="isApproved" valuePropName="checked">
           <Select
             placeholder="Select status"
             options={[

@@ -280,57 +280,66 @@ export const Appointment = () => {
 
     setUpdatingConsultation(true);
     try {
-      // Map frontend status values to backend enum values
-      const statusMapping = {
-        scheduled: "scheduled",
-        completed: "completed",
-        cancelled: "cancelled",
-      };
+      // Handle cancellation separately
+      if (consultationStatus === "cancelled") {
+        await api.post(`/consultations/${selectedSlot.consultationId}/cancel`);
 
-      const backendStatus =
-        statusMapping[consultationStatus] ||
-        consultationStatus.toUpperCase().replace("-", "_");
+        Modal.success({
+          title: "Success",
+          content: "Consultation cancelled successfully!",
+        });
+      } else {
+        // Handle completed and other statuses with the original API
+        const statusMapping = {
+          scheduled: "scheduled",
+          completed: "completed",
+        };
 
-      // Prepare the request data with proper status formatting
-      const requestData = {
-        status: backendStatus,
-        ...(consultationNotes.trim() && { notes: consultationNotes.trim() }),
-      };
+        const backendStatus =
+          statusMapping[consultationStatus] ||
+          consultationStatus.toUpperCase().replace("-", "_");
 
-      console.log("Updating consultation with data:", requestData);
-      console.log("Frontend status:", consultationStatus);
-      console.log("Backend status:", backendStatus);
-      console.log("Consultation ID:", selectedSlot.consultationId);
+        // Prepare the request data with proper status formatting
+        const requestData = {
+          status: backendStatus,
+          ...(consultationNotes.trim() && { notes: consultationNotes.trim() }),
+        };
 
-      // Try the request with status in body first
-      try {
-        await api.patch(
-          `/consultations/${selectedSlot.consultationId}/status-note`,
-          requestData
-        );
-      } catch (firstError) {
-        // If that fails, try with status as query parameter
-        console.log(
-          "First attempt failed, trying with query parameters...",
-          firstError.message
-        );
-        const params = new URLSearchParams();
-        params.append("status", backendStatus);
-        if (consultationNotes.trim()) {
-          params.append("notes", consultationNotes.trim());
+        console.log("Updating consultation with data:", requestData);
+        console.log("Frontend status:", consultationStatus);
+        console.log("Backend status:", backendStatus);
+        console.log("Consultation ID:", selectedSlot.consultationId);
+
+        // Try the request with status in body first
+        try {
+          await api.patch(
+            `/consultations/${selectedSlot.consultationId}/status-note`,
+            requestData
+          );
+        } catch (firstError) {
+          // If that fails, try with status as query parameter
+          console.log(
+            "First attempt failed, trying with query parameters...",
+            firstError.message
+          );
+          const params = new URLSearchParams();
+          params.append("status", backendStatus);
+          if (consultationNotes.trim()) {
+            params.append("notes", consultationNotes.trim());
+          }
+
+          await api.patch(
+            `/consultations/${
+              selectedSlot.consultationId
+            }/status-note?${params.toString()}`
+          );
         }
 
-        await api.patch(
-          `/consultations/${
-            selectedSlot.consultationId
-          }/status-note?${params.toString()}`
-        );
+        Modal.success({
+          title: "Success",
+          content: "Consultation updated successfully!",
+        });
       }
-
-      Modal.success({
-        title: "Success",
-        content: "Consultation updated successfully!",
-      });
 
       setConsultationModalVisible(false);
 

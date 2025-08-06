@@ -62,49 +62,49 @@ function ProTask() {
       const response = await api.get("/plan-tasks-pro/my-tasks");
       let tasksData = response.data;
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // const today = new Date();
+      // today.setHours(0, 0, 0, 0);
 
-      const overdueTasksToUpdate = tasksData.filter((task) => {
-        if (task.status !== "pending") return false;
+      // const overdueTasksToUpdate = tasksData.filter((task) => {
+      //   if (task.status !== "pending") return false;
 
-        const taskDate = new Date(task.taskDay);
-        taskDate.setHours(0, 0, 0, 0);
+      //   const taskDate = new Date(task.taskDay);
+      //   taskDate.setHours(0, 0, 0, 0);
 
-        return taskDate.getTime() < today.getTime();
-      });
+      //   return taskDate.getTime() < today.getTime();
+      // });
 
-      for (const task of overdueTasksToUpdate) {
-        try {
-          await api.put(
-            `/plan-tasks-pro/user/${task.taskId}/status`,
-            "failed",
-            {
-              headers: {
-                "Content-Type": "text/plain",
-              },
-            }
-          );
-          // Update the task status in local data
-          task.status = "failed";
-        } catch (error) {
-          console.error(
-            `Failed to auto-update task ${task.taskId} to failed:`,
-            error
-          );
-        }
-      }
+      // for (const task of overdueTasksToUpdate) {
+      //   try {
+      //     await api.put(
+      //       `/plan-tasks-pro/user/${task.taskId}/status`,
+      //       "failed",
+      //       {
+      //         headers: {
+      //           "Content-Type": "text/plain",
+      //         },
+      //       }
+      //     );
+      //     // Update the task status in local data
+      //     task.status = "failed";
+      //   } catch (error) {
+      //     console.error(
+      //       `Failed to auto-update task ${task.taskId} to failed:`,
+      //       error
+      //     );
+      //   }
+      // }
 
       setTasks(tasksData);
 
       const filtered = tasksData.filter((task) => task.status === activeFilter);
       setFilteredTasks(filtered);
 
-      if (overdueTasksToUpdate.length > 0) {
-        message.warning(
-          `${overdueTasksToUpdate.length} overdue task(s) were automatically marked as failed.`
-        );
-      }
+      // if (overdueTasksToUpdate.length > 0) {
+      //   message.warning(
+      //     `${overdueTasksToUpdate.length} overdue task(s) were automatically marked as failed.`
+      //   );
+      // }
     } catch (error) {
       console.error("Error fetching pro tasks:", error);
       message.error("Failed to fetch pro tasks");
