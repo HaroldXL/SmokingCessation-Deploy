@@ -611,10 +611,13 @@ export const MentorOverview = () => {
                           marginBottom: 4,
                         }}
                       >
-                        {smokingProgress.moneySaved}
+                        {Math.round(smokingProgress.moneySaved).toLocaleString(
+                          "vi-VN",
+                          { maximumFractionDigits: 0 }
+                        )}
                       </div>
                       <Text style={{ fontSize: "12px", color: "#8c8c8c" }}>
-                        MONEY SAVED
+                        VND SAVED
                       </Text>
                     </div>
                   </Col>
@@ -770,7 +773,14 @@ export const MentorOverview = () => {
                       >
                         PACK COST
                       </Text>
-                      <Text strong>{smokingProgress.cigarettePackCost}</Text>
+                      <Text strong>
+                        {Math.round(
+                          smokingProgress.cigarettePackCost
+                        ).toLocaleString("vi-VN", {
+                          maximumFractionDigits: 0,
+                        })}{" "}
+                        VND
+                      </Text>
                     </div>
                   </Col>
                 </Row>

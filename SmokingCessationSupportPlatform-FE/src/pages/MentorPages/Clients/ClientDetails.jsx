@@ -124,9 +124,6 @@ export const MentorClientDetails = () => {
 
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState(null);
-  const [coachNotes, setCoachNotes] = useState("");
-  const [savingNotes, setSavingNotes] = useState(false);
-  const [latestConsultationId, setLatestConsultationId] = useState(null);
 
   const [userTasks, setUserTasks] = useState([]);
   const [taskModalVisible, setTaskModalVisible] = useState(false);
@@ -238,11 +235,6 @@ export const MentorClientDetails = () => {
         setUserQuestions(questions || []);
         setUserBadges(badges || []);
         setAddictionScore(scoreData);
-        setLatestConsultationId(clientInfo.latestConsultationId);
-
-        if (clientInfo?.detailedInfo?.notes) {
-          setCoachNotes(clientInfo.detailedInfo.notes);
-        }
       } catch (err) {
         setError("Failed to load client data");
         console.error(err);
@@ -316,38 +308,6 @@ export const MentorClientDetails = () => {
   const handleViewConsultationNotes = (consultation) => {
     setSelectedConsultation(consultation);
     setNotesModalVisible(true);
-  };
-
-  const saveCoachNotes = async () => {
-    if (!latestConsultationId || !coachNotes.trim()) {
-      Modal.warning({
-        title: "Cannot Save Notes",
-        content:
-          "No consultation found or notes are empty. Please ensure there is at least one consultation for this client.",
-      });
-      return;
-    }
-
-    setSavingNotes(true);
-    try {
-      await coachService.addConsultationNote(latestConsultationId, coachNotes);
-      setClientData((prev) => ({
-        ...prev,
-        detailedInfo: { ...prev.detailedInfo, notes: coachNotes },
-      }));
-      Modal.success({
-        title: "Notes Saved",
-        content: "Your notes have been saved successfully.",
-      });
-    } catch (error) {
-      console.error("Failed to save notes:", error);
-      Modal.error({
-        title: "Save Failed",
-        content: "Failed to save notes. Please try again.",
-      });
-    } finally {
-      setSavingNotes(false);
-    }
   };
 
   const fetchUserTasks = async () => {
@@ -845,35 +805,6 @@ export const MentorClientDetails = () => {
                   </div>
                 </Card>
               </Col>
-
-              <Col span={24}>
-                {/* Coach Notes */}
-                <Card
-                  title="Coach's Private Notes"
-                  className={styles.notesCard}
-                  extra={
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<EditOutlined />}
-                      onClick={saveCoachNotes}
-                      loading={savingNotes}
-                      disabled={!coachNotes.trim() || !latestConsultationId}
-                      className={styles.saveNotesButton}
-                    >
-                      Save Notes
-                    </Button>
-                  }
-                >
-                  <TextArea
-                    rows={6}
-                    value={coachNotes}
-                    onChange={(e) => setCoachNotes(e.target.value)}
-                    placeholder="Add your private notes about this client..."
-                    className={styles.notesTextArea}
-                  />
-                </Card>
-              </Col>
             </Row>
           </Tabs.TabPane>
 
@@ -974,12 +905,11 @@ export const MentorClientDetails = () => {
                     <Statistic
                       title="Money Saved"
                       value={smokingProgress.moneySaved}
-                      prefix={<DollarOutlined style={{ color: "#52c41a" }} />}
                       valueStyle={{ color: "#52c41a" }}
                     />
                     <Text type="secondary" className={styles.progressStatText}>
                       Pack cost:{" "}
-                      {smokingProgress.cigarettePackCost?.toLocaleString()}
+                      {smokingProgress.cigarettePackCost?.toLocaleString()} VND
                     </Text>
                   </Card>
                 </Col>

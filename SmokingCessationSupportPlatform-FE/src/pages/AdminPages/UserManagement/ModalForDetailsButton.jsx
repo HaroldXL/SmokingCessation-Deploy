@@ -393,7 +393,12 @@ const ModalForDetailsButton = ({
                       bodyStyle={{ padding: 12 }}
                     >
                       <div className={styles.progressValueMoney}>
-                        ${userDetail?.moneySaved ?? 0}
+                        {userDetail?.moneySaved
+                          ? new Intl.NumberFormat("vi-VN", {
+                              maximumFractionDigits: 0,
+                            }).format(Math.round(userDetail.moneySaved))
+                          : "0"}{" "}
+                        VND
                       </div>
                       <div className={styles.progressLabel}>Money Saved</div>
                     </Card>
@@ -419,7 +424,16 @@ const ModalForDetailsButton = ({
                     <Col span={12}>
                       <div>
                         <span className={styles.label}>Pack Cost:</span>
-                        <b>${userDetail?.cigarettePackCost ?? "0.00"}</b>
+                        <b>
+                          {userDetail?.cigarettePackCost
+                            ? new Intl.NumberFormat("vi-VN", {
+                                maximumFractionDigits: 0,
+                              }).format(
+                                Math.round(userDetail.cigarettePackCost)
+                              )
+                            : "0"}{" "}
+                          VND
+                        </b>
                       </div>
                       <div>
                         <span className={styles.label}>Program Status:</span>
