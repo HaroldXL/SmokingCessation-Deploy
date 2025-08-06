@@ -80,13 +80,13 @@ function UserProgress() {
                   <DollarOutlined className="progress__content-card-item-money" />
                   <span className="progress__content-card-item-number">
                     {savingData?.actualSaving
-                      ? new Intl.NumberFormat("vi-VN").format(
-                          savingData.actualSaving
-                        )
-                      : "0"}
+                      ? new Intl.NumberFormat("vi-VN", {
+                          maximumFractionDigits: 0,
+                        }).format(Math.round(savingData.actualSaving))
+                      : "0"}{" "}
                   </span>
                   <span className="progress__content-card-item-text">
-                    money saved
+                    VND saved
                   </span>
                 </div>
               </div>

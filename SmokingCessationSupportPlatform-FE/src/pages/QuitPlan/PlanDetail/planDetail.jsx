@@ -530,12 +530,12 @@ function PlanDetail() {
                     <DollarOutlined className="wrapper__content-detail-progress-item-money" />
                     <span className="wrapper__content-detail-progress-item-number">
                       {savingData?.actualSaving
-                        ? new Intl.NumberFormat("vi-VN").format(
-                            savingData.actualSaving
-                          )
-                        : "0"}
+                        ? new Intl.NumberFormat("vi-VN", {
+                            maximumFractionDigits: 0,
+                          }).format(Math.round(savingData.actualSaving))
+                        : "0"}{" "}
                     </span>
-                    money saved
+                    VND saved
                   </p>
                 </div>
               </div>
