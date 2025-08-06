@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Select, Upload, Button, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import { blogService } from "../../../services/blogService";
 import uploadFile from "../../../store/utils/file";
 
 const { TextArea } = Input;
@@ -18,7 +17,7 @@ const EditPostModal = ({ post, isOpen, onClose, onSave }) => {
         title: post.title || "",
         content: post.content || "",
         postType: post.postType || "other",
-        status: post.status || false,
+        isApproved: post.status || false,
       });
 
       // Set existing image in fileList if available
@@ -56,12 +55,19 @@ const EditPostModal = ({ post, isOpen, onClose, onSave }) => {
         values.imageUrl = fileList[0].url;
       }
 
-      // Call API to update post
-      await blogService.updatePost(post.id, values);
-      message.success("Post updated successfully!");
+      // Create updated post object with all necessary fields
+      const updatedPost = {
+        ...post,
+        ...values,
+        id: post.id || post.postId,
+        status: values.isApproved,
+      };
 
-      // Call onSave callback to refresh data
-      if (onSave) onSave();
+      // Call onSave callback to refresh data in parent component
+      if (onSave) {
+        await onSave(updatedPost);
+      }
+
       handleClose();
     } catch (error) {
       console.error("Error updating post:", error);
@@ -70,7 +76,6 @@ const EditPostModal = ({ post, isOpen, onClose, onSave }) => {
       setLoading(false);
     }
   };
-
   const handleClose = () => {
     form.resetFields();
     setFileList([]);
@@ -125,7 +130,7 @@ const EditPostModal = ({ post, isOpen, onClose, onSave }) => {
           title: "",
           content: "",
           postType: "other",
-          status: false,
+          isApproved: false,
         }}
       >
         <Form.Item
@@ -190,9 +195,10 @@ const EditPostModal = ({ post, isOpen, onClose, onSave }) => {
           </Upload>
         </Form.Item>
 
-        <Form.Item label="Status" name="isApproved" valuePropName="checked">
+        <Form.Item label="Status" name="isApproved">
           <Select
             placeholder="Select status"
+            allowClear={false}
             options={[
               { value: false, label: "Not Published" },
               { value: true, label: "Published" },

@@ -159,12 +159,38 @@ const BlogManagement = () => {
 
   const handleSavePost = async (updatedPost) => {
     try {
-      await blogService.updatePost(updatedPost.id, updatedPost);
+      // Ensure we have a valid post ID - check multiple possible properties
+      const postId = updatedPost.id || updatedPost.postId || editingPost?.id;
 
-      // Cập nhật post trong state
+      if (!postId) {
+        console.error("No valid post ID found:", updatedPost);
+        message.error("Invalid post data - missing ID");
+        return;
+      }
+
+      // Prepare data for API - ensure proper field mapping
+      const apiData = {
+        title: updatedPost.title,
+        content: updatedPost.content,
+        postType: updatedPost.postType,
+        imageUrl: updatedPost.imageUrl,
+        isApproved: updatedPost.status || updatedPost.isApproved, // Map status to isApproved for API
+      };
+
+      await blogService.updatePost(postId, apiData);
+
+      // Cập nhật post trong state với đúng structure
       setPosts((currentPosts) =>
         currentPosts.map((post) =>
-          post.id === updatedPost.id ? updatedPost : post
+          post.id === postId
+            ? {
+                ...post,
+                ...updatedPost,
+                id: postId,
+                status: updatedPost.status || updatedPost.isApproved, // Keep status for UI
+                updated: new Date().toISOString(), // Update timestamp
+              }
+            : post
         )
       );
 
@@ -172,6 +198,30 @@ const BlogManagement = () => {
       setShowEditModal(false);
       setEditingPost(null);
       message.success("Post updated successfully");
+
+      // Force refresh data from API to ensure consistency
+      setTimeout(async () => {
+        try {
+          const response = await blogService.getPosts();
+          const postsData = Array.isArray(response)
+            ? response
+            : response.data || [];
+          const transformedPosts = postsData.map((post) => ({
+            id: post.postId,
+            title: post.title,
+            author: post.user?.fullName || post.user?.profileName || "Unknown",
+            content: post.content,
+            imageUrl: post.imageUrl,
+            postType: post.postType,
+            updated: post.updatedAt,
+            status: post.isApproved,
+            user: post.user,
+          }));
+          setPosts(transformedPosts);
+        } catch (error) {
+          console.error("Failed to refresh posts:", error);
+        }
+      }, 500);
     } catch (error) {
       console.error("Error updating post:", error);
       message.error("Failed to save post");
