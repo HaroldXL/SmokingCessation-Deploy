@@ -381,9 +381,9 @@ function PlanDetail() {
                   </span>
                   <span className="wrapper__content-detail-saving-value">
                     {savingData?.perWeek
-                      ? new Intl.NumberFormat("vi-VN").format(
-                          savingData.perWeek
-                        )
+                      ? new Intl.NumberFormat("vi-VN", {
+                          maximumFractionDigits: 0,
+                        }).format(Math.round(savingData.perWeek))
                       : "0"}{" "}
                     VND
                   </span>
@@ -397,9 +397,9 @@ function PlanDetail() {
                   </span>
                   <span className="wrapper__content-detail-saving-value">
                     {savingData?.perMonth
-                      ? new Intl.NumberFormat("vi-VN").format(
-                          savingData.perMonth
-                        )
+                      ? new Intl.NumberFormat("vi-VN", {
+                          maximumFractionDigits: 0,
+                        }).format(Math.round(savingData.perMonth))
                       : "0"}{" "}
                     VND
                   </span>
@@ -413,9 +413,9 @@ function PlanDetail() {
                   </span>
                   <span className="wrapper__content-detail-saving-value">
                     {savingData?.perYear
-                      ? new Intl.NumberFormat("vi-VN").format(
-                          savingData.perYear
-                        )
+                      ? new Intl.NumberFormat("vi-VN", {
+                          maximumFractionDigits: 0,
+                        }).format(Math.round(savingData.perYear))
                       : "0"}{" "}
                     VND
                   </span>

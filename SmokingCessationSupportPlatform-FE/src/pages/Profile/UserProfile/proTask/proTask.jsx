@@ -10,8 +10,8 @@ import {
   Tag,
   Button,
   Dropdown,
-  Modal,
   Popconfirm,
+  Result,
 } from "antd";
 import Header from "../../../../components/header/header";
 import Footer from "../../../../components/footer/footer";
@@ -20,16 +20,17 @@ import {
   CalendarTwoTone,
   CheckCircleTwoTone,
   IdcardTwoTone,
-  MoreOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   DownOutlined,
 } from "@ant-design/icons";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import api from "../../../../config/axios";
 
 function ProTask() {
+  const user = useSelector((store) => store.user);
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -249,136 +250,154 @@ function ProTask() {
               motivated.
             </h3>
 
-            <div className="wrapper__profile-free-task-categor">
-              <Card
-                hoverable
-                className={`wrapper__profile-pro-task-categor-card ${
-                  activeFilter === "pending" ? "active" : ""
-                }`}
-                onClick={() => filterTasks("pending")}
-              >
-                Pending
-              </Card>
-              <Card
-                hoverable
-                className={`wrapper__profile-pro-task-categor-card ${
-                  activeFilter === "completed" ? "active" : ""
-                }`}
-                onClick={() => filterTasks("completed")}
-              >
-                Completed
-              </Card>
-              <Card
-                hoverable
-                className={`wrapper__profile-pro-task-categor-card ${
-                  activeFilter === "failed" ? "active" : ""
-                }`}
-                onClick={() => filterTasks("failed")}
-              >
-                Failed
-              </Card>
-            </div>
-            <Divider className="divider" />
-
-            {loading ? (
-              <div style={{ textAlign: "center", padding: "50px" }}>
-                <Spin size="large" />
-              </div>
-            ) : filteredTasks.length === 0 ? (
-              <Empty
-                description={`No ${activeFilter} tasks found!`}
-                style={{ margin: "20px 0" }}
+            {!user.hasActive ? (
+              <Result
+                title="Upgrade to PRO to unlock Pro Tasks"
+                extra={
+                  <Button
+                    type="primary"
+                    key="console"
+                    className="wrapper__profile-bookings-upgrade-btn"
+                    onClick={() => navigate("/user-profile/membership")}
+                  >
+                    See Membership Plans
+                  </Button>
+                }
               />
             ) : (
-              filteredTasks.map((task) => (
-                <Card
-                  key={task.taskId}
-                  className="wrapper__profile-bookings-card"
-                >
-                  <div className="wrapper__profile-free-task-header">
-                    <p className="wrapper__profile-bookings-card-date-details mentor-fullname">
-                      <IdcardTwoTone className="wrapper__profile-bookings-card-date-details-icon" />{" "}
-                      Mentor:{" "}
-                      <Button
-                        type="link"
-                        className="wrapper__profile-bookings-card-date-details-mentor"
-                        onClick={() => handleMentorClick(task.mentorId)}
-                      >
-                        {getMentorDetails(task.mentorId)?.fullName ||
-                          `Mentor ${task.mentorId}`}
-                      </Button>
-                    </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
+              <>
+                <div className="wrapper__profile-free-task-categor">
+                  <Card
+                    hoverable
+                    className={`wrapper__profile-pro-task-categor-card ${
+                      activeFilter === "pending" ? "active" : ""
+                    }`}
+                    onClick={() => filterTasks("pending")}
+                  >
+                    Pending
+                  </Card>
+                  <Card
+                    hoverable
+                    className={`wrapper__profile-pro-task-categor-card ${
+                      activeFilter === "completed" ? "active" : ""
+                    }`}
+                    onClick={() => filterTasks("completed")}
+                  >
+                    Completed
+                  </Card>
+                  <Card
+                    hoverable
+                    className={`wrapper__profile-pro-task-categor-card ${
+                      activeFilter === "failed" ? "active" : ""
+                    }`}
+                    onClick={() => filterTasks("failed")}
+                  >
+                    Failed
+                  </Card>
+                </div>
+                <Divider className="divider" />
+
+                {loading ? (
+                  <div style={{ textAlign: "center", padding: "50px" }}>
+                    <Spin size="large" />
+                  </div>
+                ) : filteredTasks.length === 0 ? (
+                  <Empty
+                    description={`No ${activeFilter} tasks found!`}
+                    style={{ margin: "20px 0" }}
+                  />
+                ) : (
+                  filteredTasks.map((task) => (
+                    <Card
+                      key={task.taskId}
+                      className="wrapper__profile-bookings-card"
                     >
-                      <Tag
-                        color={
-                          task.status === "completed"
-                            ? "green"
-                            : task.status === "failed"
-                            ? "red"
-                            : "blue"
-                        }
-                        style={{ fontSize: "12px", fontWeight: "500" }}
-                      >
-                        {task.status.charAt(0).toUpperCase() +
-                          task.status.slice(1)}
-                      </Tag>
-                      {task.status === "pending" &&
-                        isTaskUpdateAllowed(task) && (
-                          <Dropdown
-                            menu={{ items: getTaskActions(task) }}
-                            trigger={["click"]}
-                            placement="bottomRight"
+                      <div className="wrapper__profile-free-task-header">
+                        <p className="wrapper__profile-bookings-card-date-details mentor-fullname">
+                          <IdcardTwoTone className="wrapper__profile-bookings-card-date-details-icon" />{" "}
+                          Mentor:{" "}
+                          <Button
+                            type="link"
+                            className="wrapper__profile-bookings-card-date-details-mentor"
+                            onClick={() => handleMentorClick(task.mentorId)}
                           >
-                            <Button
-                              type="text"
-                              icon={<DownOutlined />}
-                              loading={updatingTaskId === task.taskId}
-                              color="primary"
-                              variant="filled"
-                            >
-                              Update Status
-                            </Button>
-                          </Dropdown>
-                        )}
-                      {task.status === "pending" &&
-                        !isTaskUpdateAllowed(task) && (
-                          <Tag color="orange" style={{ fontSize: "12px" }}>
-                            {new Date(task.taskDay) > new Date()
-                              ? "Not Yet Available"
-                              : "Overdue"}
+                            {getMentorDetails(task.mentorId)?.fullName ||
+                              `Mentor ${task.mentorId}`}
+                          </Button>
+                        </p>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <Tag
+                            color={
+                              task.status === "completed"
+                                ? "green"
+                                : task.status === "failed"
+                                ? "red"
+                                : "blue"
+                            }
+                            style={{ fontSize: "12px", fontWeight: "500" }}
+                          >
+                            {task.status.charAt(0).toUpperCase() +
+                              task.status.slice(1)}
                           </Tag>
-                        )}
-                    </div>
-                  </div>
-
-                  <div className="wrapper__profile-bookings-card-date">
-                    <p className="wrapper__profile-bookings-card-date-details">
-                      <CalendarTwoTone className="wrapper__profile-bookings-card-date-details-icon" />{" "}
-                      {formatDate(task.taskDay)}
-                    </p>
-                    <p className="wrapper__profile-bookings-card-date-details">
-                      <CheckCircleTwoTone className="wrapper__profile-bookings-card-date-details-icon" />{" "}
-                      Target: {task.targetCigarettes} cigarettes
-                    </p>
-                  </div>
-
-                  <div className="wrapper__profile-bookings-card-coach">
-                    <div className="wrapper__profile-bookings-card-coach-info">
-                      <div>
-                        <div className="wrapper__profile-bookings-card-coach-info-support">
-                          <p>"{task.customSupportMeasures}"</p>
+                          {task.status === "pending" &&
+                            isTaskUpdateAllowed(task) && (
+                              <Dropdown
+                                menu={{ items: getTaskActions(task) }}
+                                trigger={["click"]}
+                                placement="bottomRight"
+                              >
+                                <Button
+                                  type="text"
+                                  icon={<DownOutlined />}
+                                  loading={updatingTaskId === task.taskId}
+                                  color="primary"
+                                  variant="filled"
+                                >
+                                  Update Status
+                                </Button>
+                              </Dropdown>
+                            )}
+                          {task.status === "pending" &&
+                            !isTaskUpdateAllowed(task) && (
+                              <Tag color="orange" style={{ fontSize: "12px" }}>
+                                {new Date(task.taskDay) > new Date()
+                                  ? "Not Yet Available"
+                                  : "Overdue"}
+                              </Tag>
+                            )}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </Card>
-              ))
+
+                      <div className="wrapper__profile-bookings-card-date">
+                        <p className="wrapper__profile-bookings-card-date-details">
+                          <CalendarTwoTone className="wrapper__profile-bookings-card-date-details-icon" />{" "}
+                          {formatDate(task.taskDay)}
+                        </p>
+                        <p className="wrapper__profile-bookings-card-date-details">
+                          <CheckCircleTwoTone className="wrapper__profile-bookings-card-date-details-icon" />{" "}
+                          Target: {task.targetCigarettes} cigarettes
+                        </p>
+                      </div>
+
+                      <div className="wrapper__profile-bookings-card-coach">
+                        <div className="wrapper__profile-bookings-card-coach-info">
+                          <div>
+                            <div className="wrapper__profile-bookings-card-coach-info-support">
+                              <p>"{task.customSupportMeasures}"</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </>
             )}
           </div>
         </div>
