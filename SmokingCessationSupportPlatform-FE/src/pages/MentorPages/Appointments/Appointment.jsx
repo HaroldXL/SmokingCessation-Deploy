@@ -282,7 +282,9 @@ export const Appointment = () => {
     try {
       // Handle cancellation separately
       if (consultationStatus === "cancelled") {
-        await api.post(`/consultations/${selectedSlot.consultationId}/cancel`);
+        await api.post(
+          `/consultations/mentor/${selectedSlot.consultationId}/cancel`
+        );
 
         Modal.success({
           title: "Success",
