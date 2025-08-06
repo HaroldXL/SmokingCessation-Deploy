@@ -110,6 +110,12 @@ function FreeTask() {
       const errorMessage = error.response?.data?.message;
       if (errorMessage === "Bạn đã tạo nhiệm vụ cho ngày này rồi.") {
         message.error("You have already created Task for this day.");
+      } else if (
+        errorMessage === "Không tìm thấy kế hoạch bỏ thuốc đang hoạt động"
+      ) {
+        message.warning(
+          "Please create a quit plan first before creating tasks!"
+        );
       } else {
         message.error("Failed to create task");
       }
