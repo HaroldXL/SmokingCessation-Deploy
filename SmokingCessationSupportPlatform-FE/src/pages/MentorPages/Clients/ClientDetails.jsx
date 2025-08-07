@@ -1457,7 +1457,12 @@ export const MentorClientDetails = () => {
             label="Task Date"
             rules={[{ required: true, message: "Please select a task date" }]}
           >
-            <DatePicker style={{ width: "100%" }} />
+            <DatePicker
+              style={{ width: "50%" }}
+              disabledDate={(current) =>
+                current && current < dayjs().startOf("day")
+              }
+            />
           </Form.Item>
 
           <Form.Item
@@ -1482,7 +1487,7 @@ export const MentorClientDetails = () => {
           >
             <InputNumber
               min={0}
-              style={{ width: "100%" }}
+              style={{ width: "50%" }}
               placeholder="Enter target number of cigarettes"
             />
           </Form.Item>
